@@ -10,7 +10,11 @@ find_package(glm REQUIRED)
 find_package(Vulkan REQUIRED)
 
 # 将源代码添加到此项目的可执行文件。
-add_executable (vulkanlearn "vulkanlearn.cpp" "vulkanlearn.h")
+add_executable (vulkanlearn 
+	"vulkanlearn.cpp" "vulkanlearn.h" 
+	"app/application.h" 
+	"app/hellotriangleapplication.h" "app/hellotriangleapplication.cc"
+ "app/application.cc")
 
 target_link_libraries(vulkanlearn
 	PRIVATE
