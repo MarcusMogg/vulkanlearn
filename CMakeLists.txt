@@ -8,18 +8,21 @@ project ("vulkanlearn")
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 find_package(Vulkan REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 # 将源代码添加到此项目的可执行文件。
 add_executable (vulkanlearn 
 	"vulkanlearn.cpp" "vulkanlearn.h" 
-	"app/application.h" 
+	"app/application.h"  "app/application.cc" 
 	"app/hellotriangleapplication.h" "app/hellotriangleapplication.cc"
- "app/application.cc")
+	"util/log.h" 
+	"util/assert_exception.h" "util/assert_exception.cc")
 
 target_link_libraries(vulkanlearn
 	PRIVATE
 		glfw
 		Vulkan::Vulkan
+		fmt::fmt
 )
 
 # TODO: 如有需要，请添加测试并安装目标。

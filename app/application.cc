@@ -1,9 +1,12 @@
 #include "application.h"
 
-#define GLFW_INCLUDE_VULKAN
-#include "GLFW/glfw3.h"
-#include "vulkan/vulkan.h"
+#include <vector>
 
+#define GLFW_INCLUDE_VULKAN
+#include "../util/assert_exception.h"
+#include "GLFW/glfw3.h"
+#include "fmt/format.h"
+#include "vulkan/vulkan.h"
 using namespace vklearn;
 
 int Application::Run() {
@@ -19,8 +22,6 @@ int Application::Run() {
   return 0;
 }
 
-void Application::InitVulkan() {}
-
 void Application::InitWindow() {
   glfwInit();
   // no opengl
@@ -32,6 +33,46 @@ void Application::InitWindow() {
 }
 
 void Application::CleanUp() {
+  vkDestroyInstance(instance_, nullptr);
   glfwDestroyWindow(window_);
   glfwTerminate();
 }
+
+void Application::CreateInstance() {
+  VkApplicationInfo app_info{};
+  app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  app_info.pApplicationName = "Hello Triangle";
+  app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+  app_info.pEngineName = "No Engine";
+  app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+  app_info.apiVersion = VK_API_VERSION_1_0;
+
+  VkInstanceCreateInfo create_info{};
+  create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  create_info.pApplicationInfo = &app_info;
+
+  uint32_t glfwExtensionCount = 0;
+  const char** glfwExtensions;
+
+  glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+  create_info.enabledExtensionCount = glfwExtensionCount;
+  create_info.ppEnabledExtensionNames = glfwExtensions;
+
+  create_info.enabledLayerCount = 0;
+
+  ASSERT(vkCreateInstance(&create_info, nullptr, &instance_) == VK_SUCCESS)
+      .SetErrorMessage("vkCreateInstance error")
+      .Throw();
+
+  uint32_t extensionCount = 0;
+  vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+  std::vector<VkExtensionProperties> extensions(extensionCount);
+  vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+  std::cout << "available extensions:\n";
+  for (const auto& extension : extensions) {
+    std::cout << '\t' << extension.extensionName << '\n';
+  }
+}
+
+void Application::InitVulkan() { CreateInstance(); }

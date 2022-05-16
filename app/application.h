@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "vulkan/vulkan.h"
+
 class GLFWwindow;
 
 namespace vklearn {
@@ -22,7 +24,10 @@ class Application {
   virtual void MainLoop() = 0;
   virtual void CleanUp();
 
+  void CreateInstance();
+
   GLFWwindow* window_;
+  VkInstance instance_;
 };
 
 }  // namespace vklearn
