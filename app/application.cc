@@ -39,6 +39,7 @@ void Application::CleanUp() {
 }
 
 void Application::CreateInstance() {
+  // base app info
   VkApplicationInfo app_info{};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.pApplicationName = "Hello Triangle";
@@ -50,7 +51,7 @@ void Application::CreateInstance() {
   VkInstanceCreateInfo create_info{};
   create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   create_info.pApplicationInfo = &app_info;
-
+  // platfor extension by glfw
   uint32_t glfwExtensionCount = 0;
   const char** glfwExtensions;
 
@@ -61,10 +62,10 @@ void Application::CreateInstance() {
 
   create_info.enabledLayerCount = 0;
 
-  ASSERT(vkCreateInstance(&create_info, nullptr, &instance_) == VK_SUCCESS)
+  ASSERT_EXECPTION(vkCreateInstance(&create_info, nullptr, &instance_) != VK_SUCCESS)
       .SetErrorMessage("vkCreateInstance error")
       .Throw();
-
+  // query available extensions
   uint32_t extensionCount = 0;
   vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
   std::vector<VkExtensionProperties> extensions(extensionCount);
