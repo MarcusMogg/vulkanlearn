@@ -37,11 +37,14 @@ class Application {
 
   void CreateInstance();
   void PickPhysicalDevice();
+  void CreateLogicalDevice();
 
   GLFWwindow* window_;
   VkInstance instance_;
   std::shared_ptr<ValidationLayer> layer_;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
+  VkDevice logic_device_ = VK_NULL_HANDLE;
+  VkQueue graph_queue_ = VK_NULL_HANDLE;
 };
 
 }  // namespace vklearn

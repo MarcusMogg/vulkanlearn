@@ -50,6 +50,7 @@ void Application::InitWindow() {
 
 void Application::CleanUp() {
   layer_.reset();
+  vkDestroyDevice(logic_device_, nullptr);
   vkDestroyInstance(instance_, nullptr);  // all child must destroy before instance
   glfwDestroyWindow(window_);
   glfwTerminate();
@@ -120,6 +121,40 @@ void Application::PickPhysicalDevice() {
     }
   }
   ASSERT_EXECPTION(physical_device_ == VK_NULL_HANDLE).SetErrorMessage("failed to find a suitable GPU").Throw();
+}
+
+void Application::CreateLogicalDevice() {
+  const auto indices = QueueFamilyIndices::FindQueueFamilies(physical_device_);
+  VkDeviceQueueCreateInfo queueCreateInfo{};
+  queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  queueCreateInfo.queueFamilyIndex = indices.graphics_family.value();
+  queueCreateInfo.queueCount = 1;
+  float queuePriority = 1.0f;
+  queueCreateInfo.pQueuePriorities = &queuePriority;
+
+  VkPhysicalDeviceFeatures deviceFeatures{};
+
+  VkDeviceCreateInfo createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  createInfo.pQueueCreateInfos = &queueCreateInfo;
+  createInfo.queueCreateInfoCount = 1;
+
+  createInfo.pEnabledFeatures = &deviceFeatures;
+
+  createInfo.enabledExtensionCount = 0;
+
+  if (kEnableValidationLayers) {
+    createInfo.enabledLayerCount = static_cast<uint32_t>(kValidationLayers.size());
+    createInfo.ppEnabledLayerNames = kValidationLayers.data();
+  } else {
+    createInfo.enabledLayerCount = 0;
+  }
+
+  ASSERT_EXECPTION(vkCreateDevice(physical_device_, &createInfo, nullptr, &logic_device_) != VK_SUCCESS)
+      .SetErrorMessage("failed to create logical device")
+      .Throw();
+
+  vkGetDeviceQueue(logic_device_, indices.graphics_family.value(), 0, &graph_queue_);
 }
 
 QueueFamilyIndices QueueFamilyIndices::FindQueueFamilies(VkPhysicalDevice device) {
