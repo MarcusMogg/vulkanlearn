@@ -1,7 +1,10 @@
 #pragma once
 
 #include <iostream>
+#include <string>
+#include <vector>
 
+#include "validationlayer.h"
 #include "vulkan/vulkan.h"
 
 class GLFWwindow;
@@ -28,6 +31,7 @@ class Application {
 
   GLFWwindow* window_;
   VkInstance instance_;
+  std::shared_ptr<ValidationLayer> layer_;
 };
 
 }  // namespace vklearn

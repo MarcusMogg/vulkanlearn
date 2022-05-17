@@ -16,7 +16,7 @@ add_executable (vulkanlearn
 	"app/application.h"  "app/application.cc" 
 	"app/hellotriangleapplication.h" "app/hellotriangleapplication.cc"
 	"util/log.h" 
-	"util/assert_exception.h" "util/assert_exception.cc")
+	"util/assert_exception.h" "util/assert_exception.cc" "app/validationlayer.h" "app/validationlayer.cc")
 
 target_link_libraries(vulkanlearn
 	PRIVATE

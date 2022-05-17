@@ -6,6 +6,7 @@
 #include "../util/assert_exception.h"
 #include "GLFW/glfw3.h"
 #include "fmt/format.h"
+#include "validationlayer.h"
 #include "vulkan/vulkan.h"
 using namespace vklearn;
 
@@ -33,7 +34,8 @@ void Application::InitWindow() {
 }
 
 void Application::CleanUp() {
-  vkDestroyInstance(instance_, nullptr);
+  layer_.reset();
+  vkDestroyInstance(instance_, nullptr);  // all child must destroy before instance
   glfwDestroyWindow(window_);
   glfwTerminate();
 }
@@ -56,11 +58,17 @@ void Application::CreateInstance() {
   const char** glfwExtensions;
 
   glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+  std::vector<const char*> gextensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-  create_info.enabledExtensionCount = glfwExtensionCount;
-  create_info.ppEnabledExtensionNames = glfwExtensions;
-
-  create_info.enabledLayerCount = 0;
+  if (kEnableValidationLayers) {
+    create_info.enabledLayerCount = static_cast<uint32_t>(kValidationLayers.size());
+    create_info.ppEnabledLayerNames = kValidationLayers.data();
+    gextensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+  } else {
+    create_info.enabledLayerCount = 0;
+  }
+  create_info.enabledExtensionCount = static_cast<uint32_t>(gextensions.size());
+  create_info.ppEnabledExtensionNames = gextensions.data();
 
   ASSERT_EXECPTION(vkCreateInstance(&create_info, nullptr, &instance_) != VK_SUCCESS)
       .SetErrorMessage("vkCreateInstance error")
@@ -76,4 +84,9 @@ void Application::CreateInstance() {
   }
 }
 
-void Application::InitVulkan() { CreateInstance(); }
+void Application::InitVulkan() {
+  ValidationLayer::Check();
+  CreateInstance();
+  layer_ = std::make_shared<ValidationLayer>(instance_);
+  layer_->Init();
+}
