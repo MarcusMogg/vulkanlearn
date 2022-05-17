@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -10,6 +11,13 @@
 class GLFWwindow;
 
 namespace vklearn {
+
+struct QueueFamilyIndices {
+  std::optional<uint32_t> graphics_family;
+  bool isComplete() const { return graphics_family.has_value(); }
+
+  static QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
+};
 
 class Application {
  public:
@@ -28,10 +36,12 @@ class Application {
   virtual void CleanUp();
 
   void CreateInstance();
+  void PickPhysicalDevice();
 
   GLFWwindow* window_;
   VkInstance instance_;
   std::shared_ptr<ValidationLayer> layer_;
+  VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
 };
 
 }  // namespace vklearn

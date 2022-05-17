@@ -18,6 +18,8 @@ add_executable (vulkanlearn
 	"util/log.h" 
 	"util/assert_exception.h" "util/assert_exception.cc" "app/validationlayer.h" "app/validationlayer.cc")
 
+target_compile_features(vulkanlearn PRIVATE cxx_std_17)
+
 target_link_libraries(vulkanlearn
 	PRIVATE
 		glfw

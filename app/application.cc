@@ -10,6 +10,21 @@
 #include "vulkan/vulkan.h"
 using namespace vklearn;
 
+namespace vklearn {
+namespace detail {
+bool IsDeviceSuitable(VkPhysicalDevice device) {
+  VkPhysicalDeviceProperties deviceProperties;
+  VkPhysicalDeviceFeatures deviceFeatures;
+  vkGetPhysicalDeviceProperties(device, &deviceProperties);
+  vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+  const auto indices = QueueFamilyIndices::FindQueueFamilies(device);
+  // deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+  return deviceFeatures.geometryShader && indices.isComplete();
+}
+}  // namespace detail
+}  // namespace vklearn
+
 int Application::Run() {
   try {
     InitWindow();
@@ -89,4 +104,39 @@ void Application::InitVulkan() {
   CreateInstance();
   layer_ = std::make_shared<ValidationLayer>(instance_);
   layer_->Init();
+  PickPhysicalDevice();
+}
+
+void Application::PickPhysicalDevice() {
+  uint32_t deviceCount = 0;
+  vkEnumeratePhysicalDevices(instance_, &deviceCount, nullptr);
+  ASSERT_EXECPTION(deviceCount == 0).SetErrorMessage("failed to find GPUs with Vulkan support!").Throw();
+  std::vector<VkPhysicalDevice> devices(deviceCount);
+  vkEnumeratePhysicalDevices(instance_, &deviceCount, devices.data());
+  for (const auto& d : devices) {
+    if (detail::IsDeviceSuitable(d)) {
+      physical_device_ = d;
+      break;
+    }
+  }
+  ASSERT_EXECPTION(physical_device_ == VK_NULL_HANDLE).SetErrorMessage("failed to find a suitable GPU").Throw();
+}
+
+QueueFamilyIndices QueueFamilyIndices::FindQueueFamilies(VkPhysicalDevice device) {
+  QueueFamilyIndices indices;
+  uint32_t queueFamilyCount = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+  std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+  int i = 0;
+  for (const auto& queueFamily : queueFamilies) {
+    if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+      indices.graphics_family = i;
+      break;
+    }
+
+    i++;
+  }
+  return indices;
 }
