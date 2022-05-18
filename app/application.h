@@ -20,6 +20,16 @@ struct QueueFamilyIndices {
   static QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
 };
 
+struct SwapChainSupportDetails {
+  VkSurfaceCapabilitiesKHR capabilities;
+  std::vector<VkSurfaceFormatKHR> formats;
+  std::vector<VkPresentModeKHR> present_modes;
+
+  static SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
+};
+
+static const std::vector<const char*> kDeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
 class Application {
  public:
   Application() {}
@@ -40,6 +50,7 @@ class Application {
   void PickPhysicalDevice();
   void CreateLogicalDevice();
   void CreateSurface();
+  void CreateSwapChain();
 
   GLFWwindow* window_;
   VkInstance instance_;
@@ -49,6 +60,10 @@ class Application {
   VkQueue graph_queue_ = VK_NULL_HANDLE;
   VkQueue present_queue_ = VK_NULL_HANDLE;
   VkSurfaceKHR surface_;
+  VkSwapchainKHR swap_chain_;
+  std::vector<VkImage> swap_chain_images_;
+  VkFormat swap_chain_image_format_;
+  VkExtent2D swap_chain_extent_;
 };
 
 }  // namespace vklearn
