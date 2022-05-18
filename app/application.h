@@ -62,6 +62,7 @@ class Application {
   VkSurfaceKHR surface_;
   VkSwapchainKHR swap_chain_;
   std::vector<VkImage> swap_chain_images_;
+  std::vector<VkImageView> swap_chain_image_views_;
   VkFormat swap_chain_image_format_;
   VkExtent2D swap_chain_extent_;
 };

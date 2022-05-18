@@ -113,6 +113,9 @@ void Application::InitWindow() {
 
 void Application::CleanUp() {
   layer_.reset();
+  for (auto imageView : swap_chain_image_views_) {
+    vkDestroyImageView(logic_device_, imageView, nullptr);
+  }
   vkDestroySwapchainKHR(logic_device_, swap_chain_, nullptr);
   vkDestroyDevice(logic_device_, nullptr);
   vkDestroySurfaceKHR(instance_, surface_, nullptr);
@@ -331,4 +334,26 @@ void Application::CreateSwapChain() {
   vkGetSwapchainImagesKHR(logic_device_, swap_chain_, &imageCount, swap_chain_images_.data());
   swap_chain_image_format_ = surfaceFormat.format;
   swap_chain_extent_ = extent;
+
+  swap_chain_image_views_.resize(imageCount);
+  for (size_t i = 0; i < imageCount; i++) {
+    VkImageViewCreateInfo imgviewcreateInfo{};
+    imgviewcreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    imgviewcreateInfo.image = swap_chain_images_[i];
+    imgviewcreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    imgviewcreateInfo.format = swap_chain_image_format_;
+    imgviewcreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    imgviewcreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    imgviewcreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    imgviewcreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    imgviewcreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imgviewcreateInfo.subresourceRange.baseMipLevel = 0;
+    imgviewcreateInfo.subresourceRange.levelCount = 1;
+    imgviewcreateInfo.subresourceRange.baseArrayLayer = 0;
+    imgviewcreateInfo.subresourceRange.layerCount = 1;
+    ASSERT_EXECPTION(
+        vkCreateImageView(logic_device_, &imgviewcreateInfo, nullptr, &swap_chain_image_views_[i]) != VK_SUCCESS)
+        .SetErrorMessage("failed to create image views")
+        .Throw();
+  }
 }
