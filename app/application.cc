@@ -177,6 +177,7 @@ void Application::InitVulkan() {
   PickPhysicalDevice();
   CreateLogicalDevice();
   CreateSwapChain();
+  CreateGraphicsPipeline();
 }
 
 void Application::PickPhysicalDevice() {
@@ -357,3 +358,5 @@ void Application::CreateSwapChain() {
         .Throw();
   }
 }
+
+void Application::CreateGraphicsPipeline() {}

@@ -51,6 +51,7 @@ class Application {
   void CreateLogicalDevice();
   void CreateSurface();
   void CreateSwapChain();
+  void CreateGraphicsPipeline();
 
   GLFWwindow* window_;
   VkInstance instance_;
