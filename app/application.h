@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "pipeline.h"
 #include "validationlayer.h"
 #include "vulkan/vulkan.h"
 
@@ -25,7 +26,8 @@ struct SwapChainSupportDetails {
   std::vector<VkSurfaceFormatKHR> formats;
   std::vector<VkPresentModeKHR> present_modes;
 
-  static SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
+  static SwapChainSupportDetails QuerySwapChainSupport(
+      VkPhysicalDevice device, VkSurfaceKHR surface);
 };
 
 static const std::vector<const char*> kDeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
@@ -56,6 +58,7 @@ class Application {
   GLFWwindow* window_;
   VkInstance instance_;
   std::shared_ptr<ValidationLayer> layer_;
+  std::shared_ptr<GraphPipeLine> pipeline_;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
   VkDevice logic_device_ = VK_NULL_HANDLE;
   VkQueue graph_queue_ = VK_NULL_HANDLE;

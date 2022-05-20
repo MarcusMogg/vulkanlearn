@@ -1,31 +1,41 @@
 #pragma once
 
-#include "vulkan/vulkan.h "
+#include "../shaders/shaderloader.h"
+#include "vulkan/vulkan.h"
 
 namespace vklearn {
+
+static const std::vector<VkDynamicState> kDynamicStates = {
+    VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_LINE_WIDTH};
 
 class GraphPipeLine {
  public:
   GraphPipeLine(VkDevice logic_device);
   ~GraphPipeLine();
 
-  void VertexInputStage();
-  void InputAssemblyStage();
-  void ViewportStage(const VkExtent2D&);
-  void RasterizerStage();
-  void MultisampleState();
-  void DepthTestStage();
-  void ColorBlendStage();
-  void DynamicState();
+  VkPipelineVertexInputStateCreateInfo VertexInputStage();
+  VkPipelineInputAssemblyStateCreateInfo InputAssemblyStage();
+  VkPipelineViewportStateCreateInfo ViewportStage(
+      const VkExtent2D&, VkViewport& viewport, VkRect2D& scissor);
+  VkPipelineRasterizationStateCreateInfo RasterizerStage();
+  VkPipelineMultisampleStateCreateInfo MultisampleState();
+  VkPipelineDepthStencilStateCreateInfo DepthTestStage();
+  VkPipelineColorBlendStateCreateInfo ColorBlendStage(
+      VkPipelineColorBlendAttachmentState& colorBlendAttachment);
+  VkPipelineDynamicStateCreateInfo DynamicState();
 
-  void VertexShaderStage();
-  void FragmentShaderStage();
+  VkPipelineShaderStageCreateInfo VertexShaderStage(const Shader& shader);
+  VkPipelineShaderStageCreateInfo FragmentShaderStage(const Shader& shader);
 
-  void Create();
+  void CreateLayout();
+  void CreateRenderPass(VkFormat swap_chain_image_format);
+  void Create(const VkExtent2D& swap_chain_extent, const VkFormat swap_chain_image_format);
 
  private:
-  VkDevice logic_device_;
+  const VkDevice logic_device_;
   VkPipelineLayout pipeline_layout_;
+  VkRenderPass render_pass_;
+  VkPipeline graphics_pipeline_;
 };
 
 }  // namespace vklearn
