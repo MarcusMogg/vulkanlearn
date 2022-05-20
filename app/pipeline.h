@@ -31,6 +31,8 @@ class GraphPipeLine {
   void CreateRenderPass(VkFormat swap_chain_image_format);
   void Create(const VkExtent2D& swap_chain_extent, const VkFormat swap_chain_image_format);
 
+  VkRenderPass RenderPass() const { return render_pass_; }
+
  private:
   const VkDevice logic_device_;
   VkPipelineLayout pipeline_layout_;

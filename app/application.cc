@@ -120,6 +120,9 @@ void Application::InitWindow() {
 
 void Application::CleanUp() {
   layer_.reset();
+  for (auto fram : swap_chain_framebuffer_) {
+    vkDestroyFramebuffer(logic_device_, fram, nullptr);
+  }
   pipeline_.reset();
   for (auto imageView : swap_chain_image_views_) {
     vkDestroyImageView(logic_device_, imageView, nullptr);
@@ -186,8 +189,7 @@ void Application::InitVulkan() {
   CreateLogicalDevice();
   CreateSwapChain();
   CreateGraphicsPipeline();
-  pipeline_ = std::make_shared<GraphPipeLine>(logic_device_);
-  pipeline_->Create(swap_chain_extent_, swap_chain_image_format_);
+  CreateFramebuffers();
 }
 
 void Application::PickPhysicalDevice() {
@@ -384,4 +386,29 @@ void Application::CreateSwapChain() {
   }
 }
 
-void Application::CreateGraphicsPipeline() {}
+void Application::CreateGraphicsPipeline() {
+  pipeline_ = std::make_shared<GraphPipeLine>(logic_device_);
+  pipeline_->Create(swap_chain_extent_, swap_chain_image_format_);
+}
+
+void Application::CreateFramebuffers() {
+  swap_chain_framebuffer_.resize(swap_chain_image_views_.size());
+  for (size_t i = 0; i < swap_chain_framebuffer_.size(); i++) {
+    VkImageView attachments[] = {swap_chain_image_views_[i]};
+
+    VkFramebufferCreateInfo framebufferInfo{};
+    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebufferInfo.renderPass = pipeline_->RenderPass();
+    framebufferInfo.attachmentCount = 1;
+    framebufferInfo.pAttachments = attachments;
+    framebufferInfo.width = swap_chain_extent_.width;
+    framebufferInfo.height = swap_chain_extent_.height;
+    framebufferInfo.layers = 1;
+
+    ASSERT_EXECPTION(
+        vkCreateFramebuffer(
+            logic_device_, &framebufferInfo, nullptr, &swap_chain_framebuffer_[i]) != VK_SUCCESS)
+        .SetErrorMessage("failed to create framebuffer")
+        .Throw();
+  }
+}

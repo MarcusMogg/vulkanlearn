@@ -54,6 +54,7 @@ class Application {
   void CreateSurface();
   void CreateSwapChain();
   void CreateGraphicsPipeline();
+  void CreateFramebuffers();
 
   GLFWwindow* window_;
   VkInstance instance_;
@@ -67,6 +68,7 @@ class Application {
   VkSwapchainKHR swap_chain_;
   std::vector<VkImage> swap_chain_images_;
   std::vector<VkImageView> swap_chain_image_views_;
+  std::vector<VkFramebuffer> swap_chain_framebuffer_;
   VkFormat swap_chain_image_format_;
   VkExtent2D swap_chain_extent_;
 };
