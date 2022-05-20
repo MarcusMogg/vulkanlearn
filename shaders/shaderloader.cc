@@ -22,7 +22,8 @@ void Shader::Load(const std::string& filename) {
   createInfo.codeSize = data.size();
   createInfo.pCode = reinterpret_cast<const uint32_t*>(data.data());
 
-  ASSERT_EXECPTION(vkCreateShaderModule(logic_device_, &createInfo, nullptr, &shader_) != VK_SUCCESS)
+  ASSERT_EXECPTION(
+      vkCreateShaderModule(logic_device_, &createInfo, nullptr, &shader_) != VK_SUCCESS)
       .SetErrorMessage("failed to create shader module!")
       .Throw();
 }

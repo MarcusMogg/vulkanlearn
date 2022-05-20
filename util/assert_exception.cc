@@ -3,7 +3,8 @@
 #include <iostream>
 using namespace vklearn;
 
-std::shared_ptr<AssertExceptionSuccess> AssertExceptionSuccess::AssertException(bool cond, SrcLoc&& info) {
+std::shared_ptr<AssertExceptionSuccess> AssertExceptionSuccess::AssertException(
+    bool cond, SrcLoc&& info) {
   if (cond) {
     return std::make_shared<AssertExceptionFail>(info);
   } else {

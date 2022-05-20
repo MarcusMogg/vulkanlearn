@@ -36,5 +36,6 @@ class AssertExceptionFail : public AssertExceptionSuccess {
 
 #define SRC vklearn::SrcLoc(__FUNCTION__, __FILE__, __LINE__)
 // throw exception if cond is true
-#define ASSERT_EXECPTION(cond) \
-  (static_cast<vklearn::AssertExceptionSuccess&>(*vklearn::AssertExceptionSuccess::AssertException((cond), SRC)))
+#define ASSERT_EXECPTION(cond)                    \
+  (static_cast<vklearn::AssertExceptionSuccess&>( \
+      *vklearn::AssertExceptionSuccess::AssertException((cond), SRC)))
