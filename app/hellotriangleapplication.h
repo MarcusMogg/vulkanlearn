@@ -9,8 +9,7 @@ class HelloTriangleApplication : public Application {
   virtual ~HelloTriangleApplication() override {}
 
  private:
-  // void InitVulkan() override;
   virtual void MainLoop() override;
-  // void CleanUp() override;
+  void DrawFrame();
 };
 }  // namespace vklearn

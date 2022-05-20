@@ -55,6 +55,9 @@ class Application {
   void CreateSwapChain();
   void CreateGraphicsPipeline();
   void CreateFramebuffers();
+  void CreateCommandPool();
+  void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+  void CreateSyncObjects();
 
   GLFWwindow* window_;
   VkInstance instance_;
@@ -71,6 +74,13 @@ class Application {
   std::vector<VkFramebuffer> swap_chain_framebuffer_;
   VkFormat swap_chain_image_format_;
   VkExtent2D swap_chain_extent_;
+
+  VkCommandPool command_pool_;
+  VkCommandBuffer command_buffer_;
+
+  VkSemaphore image_available_semaphore_;
+  VkSemaphore render_finished_semaphore_;
+  VkFence in_flight_fence_;
 };
 
 }  // namespace vklearn

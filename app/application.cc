@@ -92,6 +92,7 @@ VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwi
     return actualExtent;
   }
 }
+
 }  // namespace detail
 }  // namespace vklearn
 
@@ -120,6 +121,10 @@ void Application::InitWindow() {
 
 void Application::CleanUp() {
   layer_.reset();
+  vkDestroySemaphore(logic_device_, image_available_semaphore_, nullptr);
+  vkDestroySemaphore(logic_device_, render_finished_semaphore_, nullptr);
+  vkDestroyFence(logic_device_, in_flight_fence_, nullptr);
+  vkDestroyCommandPool(logic_device_, command_pool_, nullptr);
   for (auto fram : swap_chain_framebuffer_) {
     vkDestroyFramebuffer(logic_device_, fram, nullptr);
   }
@@ -190,6 +195,8 @@ void Application::InitVulkan() {
   CreateSwapChain();
   CreateGraphicsPipeline();
   CreateFramebuffers();
+  CreateCommandPool();
+  CreateSyncObjects();
 }
 
 void Application::PickPhysicalDevice() {
@@ -411,4 +418,82 @@ void Application::CreateFramebuffers() {
         .SetErrorMessage("failed to create framebuffer")
         .Throw();
   }
+}
+
+void Application::CreateCommandPool() {
+  QueueFamilyIndices queueFamilyIndices =
+      QueueFamilyIndices::FindQueueFamilies(physical_device_, surface_);
+
+  VkCommandPoolCreateInfo poolInfo{};
+  poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  poolInfo.queueFamilyIndex = queueFamilyIndices.graphics_family.value();
+
+  ASSERT_EXECPTION(
+      vkCreateCommandPool(logic_device_, &poolInfo, nullptr, &command_pool_) != VK_SUCCESS)
+      .SetErrorMessage("failed to create command_pool_")
+      .Throw();
+
+  VkCommandBufferAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.commandPool = command_pool_;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandBufferCount = 1;
+
+  if (vkAllocateCommandBuffers(logic_device_, &allocInfo, &command_buffer_) != VK_SUCCESS) {
+    throw std::runtime_error("failed to allocate command buffers!");
+  }
+}
+
+void Application::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = 0;                   // Optional
+  beginInfo.pInheritanceInfo = nullptr;  // Optional
+
+  ASSERT_EXECPTION(vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+      .SetErrorMessage("failed to begin recording command buffer!")
+      .Throw();
+  VkRenderPassBeginInfo renderPassInfo{};
+  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  renderPassInfo.renderPass = pipeline_->RenderPass();
+  renderPassInfo.framebuffer = swap_chain_framebuffer_[imageIndex];
+  renderPassInfo.renderArea.offset = {0, 0};
+  renderPassInfo.renderArea.extent = swap_chain_extent_;
+  VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+  renderPassInfo.clearValueCount = 1;
+  renderPassInfo.pClearValues = &clearColor;
+
+  vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->GraphicsPipeline());
+  vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+  vkCmdEndRenderPass(commandBuffer);
+
+  ASSERT_EXECPTION(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+      .SetErrorMessage("failed to record command buffer!")
+      .Throw();
+}
+
+void Application::CreateSyncObjects() {
+  VkSemaphoreCreateInfo semaphoreInfo{};
+  semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+  ASSERT_EXECPTION(
+      vkCreateSemaphore(logic_device_, &semaphoreInfo, nullptr, &image_available_semaphore_) !=
+      VK_SUCCESS)
+      .SetErrorMessage("failed to create image_available_semaphore_!")
+      .Throw();
+
+  ASSERT_EXECPTION(
+      vkCreateSemaphore(logic_device_, &semaphoreInfo, nullptr, &render_finished_semaphore_) !=
+      VK_SUCCESS)
+      .SetErrorMessage("failed to create render_finished_semaphore_!")
+      .Throw();
+  VkFenceCreateInfo fenceInfo{};
+  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  ASSERT_EXECPTION(
+      vkCreateFence(logic_device_, &fenceInfo, nullptr, &in_flight_fence_) != VK_SUCCESS)
+      .SetErrorMessage("failed to create render_finished_semaphore_!")
+      .Throw();
 }
