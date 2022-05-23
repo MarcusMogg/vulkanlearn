@@ -1,8 +1,10 @@
 #pragma once
 
 #include "application.h"
+#include "pipeline.h"
 
 namespace vklearn {
+
 class HelloTriangleApplication : public Application {
  public:
   HelloTriangleApplication() {}
@@ -10,8 +12,7 @@ class HelloTriangleApplication : public Application {
 
  private:
   virtual void MainLoop() override;
-  void DrawFrame();
-
-  int current_frame_ = 0;
+  virtual void CreateGraphicsPipeline() override;
+  virtual void FillVertexBuffer() override;
 };
 }  // namespace vklearn

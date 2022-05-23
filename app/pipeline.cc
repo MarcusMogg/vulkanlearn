@@ -5,7 +5,8 @@
 
 namespace vklearn {
 
-GraphPipeLine::GraphPipeLine(VkDevice logic_device) : logic_device_(logic_device) {}
+GraphPipeLine::GraphPipeLine(VkDevice logic_device, const std::shared_ptr<PipeLineInput>& param)
+    : logic_device_(logic_device), param_(param) {}
 
 GraphPipeLine::~GraphPipeLine() {
   vkDestroyPipeline(logic_device_, graphics_pipeline_, nullptr);
@@ -13,13 +14,27 @@ GraphPipeLine::~GraphPipeLine() {
   vkDestroyRenderPass(logic_device_, render_pass_, nullptr);
 }
 
-VkPipelineVertexInputStateCreateInfo GraphPipeLine::VertexInputStage() {
+VkPipelineVertexInputStateCreateInfo GraphPipeLine::VertexInputStage(
+    const std::shared_ptr<VkVertexInputBindingDescription>& binding_desc,
+    const std::vector<VkVertexInputAttributeDescription>& attr_descc) {
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+
   vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertexInputInfo.vertexBindingDescriptionCount = 0;
-  vertexInputInfo.pVertexBindingDescriptions = nullptr;  // Optional
-  vertexInputInfo.vertexAttributeDescriptionCount = 0;
-  vertexInputInfo.pVertexAttributeDescriptions = nullptr;  // Optional
+  if (binding_desc == nullptr) {
+    vertexInputInfo.vertexBindingDescriptionCount = 0;
+    vertexInputInfo.pVertexBindingDescriptions = nullptr;  // Optional
+  } else {
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = binding_desc.get();  // Optional
+  }
+
+  vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attr_descc.size());
+  if (attr_descc.empty()) {
+    vertexInputInfo.pVertexAttributeDescriptions = nullptr;  // Optional
+  } else {
+    vertexInputInfo.pVertexAttributeDescriptions = attr_descc.data();  // Optional
+  }
+
   return vertexInputInfo;
 }
 
@@ -200,19 +215,20 @@ void GraphPipeLine::Create(
 
   VkGraphicsPipelineCreateInfo pipelineInfo{};
 
-  Shader vertex(logic_device_);
-  vertex.Load("./shaders/001/shader.vert");
-  Shader frag(logic_device_);
-  frag.Load("./shaders/001/shader.frag");
+  auto vertex = param_->GetVertexShader(logic_device_);
+  auto frag = param_->GetFragmentShader(logic_device_);
+
   const VkPipelineShaderStageCreateInfo shaderStages[] = {
-      VertexShaderStage(vertex),
-      FragmentShaderStage(frag),
+      VertexShaderStage(*vertex),
+      FragmentShaderStage(*frag),
   };
   pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipelineInfo.stageCount = 2;
   pipelineInfo.pStages = shaderStages;
 
-  const auto vertexInputInfo = VertexInputStage();
+  auto binding_desc = param_->GetBindingDescription();
+  auto attr_desc = param_->GetAttributeDescriptions();
+  const auto vertexInputInfo = VertexInputStage(binding_desc, attr_desc);
   pipelineInfo.pVertexInputState = &vertexInputInfo;
   const auto inputAssembly = InputAssemblyStage();
   pipelineInfo.pInputAssemblyState = &inputAssembly;

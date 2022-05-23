@@ -125,6 +125,9 @@ void Application::InitWindow() {
 }
 
 void Application::CleanUp() {
+  vkDestroyBuffer(logic_device_, vertex_buffer_, nullptr);
+  vkFreeMemory(logic_device_, vertex_buffer_memory_, nullptr);
+
   for (int i = 0; i < kMaxFramesInFight; i++) {
     vkDestroySemaphore(logic_device_, image_available_semaphore_[i], nullptr);
     vkDestroySemaphore(logic_device_, render_finished_semaphore_[i], nullptr);
@@ -202,6 +205,8 @@ void Application::InitVulkan() {
 
   CreateCommandPool();
   CreateSyncObjects();
+
+  FillVertexBuffer();
 }
 
 void Application::PickPhysicalDevice() {
@@ -398,11 +403,6 @@ void Application::CreateSwapChain() {
   }
 }
 
-void Application::CreateGraphicsPipeline() {
-  pipeline_ = std::make_shared<GraphPipeLine>(logic_device_);
-  pipeline_->Create(swap_chain_extent_, swap_chain_image_format_);
-}
-
 void Application::CreateFramebuffers() {
   swap_chain_framebuffer_.resize(swap_chain_image_views_.size());
   for (size_t i = 0; i < swap_chain_framebuffer_.size(); i++) {
@@ -471,7 +471,10 @@ void Application::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 
   vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->GraphicsPipeline());
-  vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+  VkBuffer vertexBuffers[] = {vertex_buffer_};
+  VkDeviceSize offsets[] = {0};
+  vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+  vkCmdDraw(commandBuffer, pipeline_->GetVertexCount(), 1, 0, 0);
   vkCmdEndRenderPass(commandBuffer);
 
   ASSERT_EXECPTION(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
@@ -533,4 +536,111 @@ void Application::CleanSwapChain() {
     vkDestroyImageView(logic_device_, imageView, nullptr);
   }
   vkDestroySwapchainKHR(logic_device_, swap_chain_, nullptr);
+}
+
+void Application::DrawFrame() {
+  vkWaitForFences(logic_device_, 1, &in_flight_fence_[current_frame_], VK_TRUE, UINT64_MAX);
+
+  uint32_t imageIndex;
+  const auto acq_result = vkAcquireNextImageKHR(
+      logic_device_,
+      swap_chain_,
+      UINT64_MAX,
+      image_available_semaphore_[current_frame_],
+      VK_NULL_HANDLE,
+      &imageIndex);
+
+  if (acq_result == VK_ERROR_OUT_OF_DATE_KHR || acq_result == VK_SUBOPTIMAL_KHR ||
+      frame_size_change_) {
+    frame_size_change_ = false;
+    RecreateSwapChain();
+    return;
+  } else if (acq_result != VK_SUCCESS) {
+    ASSERT_EXECPTION(true).SetErrorMessage("failed to present swap chain image!").Throw();
+  }
+
+  vkResetFences(logic_device_, 1, &in_flight_fence_[current_frame_]);
+
+  vkResetCommandBuffer(command_buffer_[current_frame_], /*VkCommandBufferResetFlagBits*/ 0);
+  RecordCommandBuffer(command_buffer_[current_frame_], imageIndex);
+
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+  VkSemaphore waitSemaphores[] = {image_available_semaphore_[current_frame_]};
+  VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = waitSemaphores;
+  submitInfo.pWaitDstStageMask = waitStages;
+
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &command_buffer_[current_frame_];
+
+  VkSemaphore signalSemaphores[] = {render_finished_semaphore_[current_frame_]};
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = signalSemaphores;
+
+  ASSERT_EXECPTION(
+      vkQueueSubmit(graph_queue_, 1, &submitInfo, in_flight_fence_[current_frame_]) != VK_SUCCESS)
+      .SetErrorMessage("failed to submit draw command buffer!")
+      .Throw();
+
+  VkPresentInfoKHR presentInfo{};
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = signalSemaphores;
+
+  VkSwapchainKHR swapChains[] = {swap_chain_};
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = swapChains;
+
+  presentInfo.pImageIndices = &imageIndex;
+
+  const auto present_result = vkQueuePresentKHR(present_queue_, &presentInfo);
+
+  if (present_result == VK_ERROR_OUT_OF_DATE_KHR || present_result == VK_SUBOPTIMAL_KHR ||
+      frame_size_change_) {
+    frame_size_change_ = false;
+    RecreateSwapChain();
+  } else if (present_result != VK_SUCCESS) {
+    ASSERT_EXECPTION(true).SetErrorMessage("failed to present swap chain image!").Throw();
+  }
+
+  current_frame_ = (current_frame_ + 1) % kMaxFramesInFight;
+}
+
+uint32_t Application::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+  VkPhysicalDeviceMemoryProperties memProperties;
+  vkGetPhysicalDeviceMemoryProperties(physical_device_, &memProperties);
+  for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+    if (typeFilter & (1 << i) &&
+        (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+      return i;
+    }
+  }
+  ASSERT_EXECPTION(true).SetErrorMessage("failed to find suitable memory type!").Throw();
+  return 0;
+}
+
+void Application::CreateVertexBuffer(const VkBufferCreateInfo& info) {
+  ASSERT_EXECPTION(vkCreateBuffer(logic_device_, &info, nullptr, &vertex_buffer_) != VK_SUCCESS)
+      .SetErrorMessage("failed to create vertex buffer!")
+      .Throw();
+
+  VkMemoryRequirements memRequirements;
+  vkGetBufferMemoryRequirements(logic_device_, vertex_buffer_, &memRequirements);
+
+  VkMemoryAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = memRequirements.size;
+  allocInfo.memoryTypeIndex = FindMemoryType(
+      memRequirements.memoryTypeBits,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+  ASSERT_EXECPTION(
+      vkAllocateMemory(logic_device_, &allocInfo, nullptr, &vertex_buffer_memory_) != VK_SUCCESS)
+      .SetErrorMessage("failed to create vertex buffer memory!")
+      .Throw();
+  vkBindBufferMemory(logic_device_, vertex_buffer_, vertex_buffer_memory_, 0);
 }

@@ -1,11 +1,87 @@
 #include "hellotriangleapplication.h"
 
 #define GLFW_INCLUDE_VULKAN
+#include <glm/glm.hpp>
+
 #include "../util/assert_exception.h"
 #include "GLFW/glfw3.h"
 #include "vulkan/vulkan.h"
 
 namespace vklearn {
+
+namespace detail {
+class Input001 : public PipeLineInput {
+ public:
+  virtual ~Input001() {}
+
+  virtual std::shared_ptr<Shader> GetVertexShader(const VkDevice device) const {
+    std::shared_ptr<Shader> shader = std::make_shared<Shader>(device);
+    shader->Load("./shaders/001/shader.vert");
+    return shader;
+  }
+  virtual std::shared_ptr<Shader> GetFragmentShader(const VkDevice device) const {
+    std::shared_ptr<Shader> shader = std::make_shared<Shader>(device);
+    shader->Load("./shaders/001/shader.frag");
+    return shader;
+  }
+  virtual std::shared_ptr<VkVertexInputBindingDescription> GetBindingDescription() const {
+    return nullptr;
+  }
+  virtual std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions() const {
+    return {};
+  }
+  virtual uint32_t GetVertexCount() const { return 3; }
+};
+
+class Input002 : public PipeLineInput {
+ public:
+  virtual ~Input002() {}
+
+  struct Vertex {
+    glm::vec2 pos;
+    glm::vec3 color;
+  };
+  static const std::vector<Vertex> vertices;
+
+  virtual std::shared_ptr<Shader> GetVertexShader(const VkDevice device) const {
+    std::shared_ptr<Shader> shader = std::make_shared<Shader>(device);
+    shader->Load("./shaders/002/shader.vert");
+    return shader;
+  }
+  virtual std::shared_ptr<Shader> GetFragmentShader(const VkDevice device) const {
+    std::shared_ptr<Shader> shader = std::make_shared<Shader>(device);
+    shader->Load("./shaders/002/shader.frag");
+    return shader;
+  }
+  virtual std::shared_ptr<VkVertexInputBindingDescription> GetBindingDescription() const {
+    std::shared_ptr<VkVertexInputBindingDescription> bindingDescription =
+        std::make_shared<VkVertexInputBindingDescription>();
+    bindingDescription->binding = 0;
+    bindingDescription->stride = sizeof(Vertex);
+    bindingDescription->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    return bindingDescription;
+  }
+  virtual std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions() const {
+    std::vector<VkVertexInputAttributeDescription> attributeDescriptions(2);
+    attributeDescriptions[0].binding = 0;
+    attributeDescriptions[0].location = 0;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[0].offset = offsetof(Vertex, pos);
+    attributeDescriptions[1].binding = 0;
+    attributeDescriptions[1].location = 1;
+    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[1].offset = offsetof(Vertex, color);
+    return attributeDescriptions;
+  }
+  virtual uint32_t GetVertexCount() const { return static_cast<uint32_t>(vertices.size()); }
+};
+
+const std::vector<Input002::Vertex> Input002::vertices = {
+    {{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+
+}  // namespace detail
 
 void HelloTriangleApplication::MainLoop() {
   while (!glfwWindowShouldClose(window_)) {
@@ -16,76 +92,26 @@ void HelloTriangleApplication::MainLoop() {
   vkDeviceWaitIdle(logic_device_);
 }
 
-void HelloTriangleApplication::DrawFrame() {
-  vkWaitForFences(logic_device_, 1, &in_flight_fence_[current_frame_], VK_TRUE, UINT64_MAX);
+void HelloTriangleApplication::CreateGraphicsPipeline() {
+  std::shared_ptr<PipeLineInput> input = std::make_shared<detail::Input002>();
 
-  uint32_t imageIndex;
-  const auto acq_result = vkAcquireNextImageKHR(
-      logic_device_,
-      swap_chain_,
-      UINT64_MAX,
-      image_available_semaphore_[current_frame_],
-      VK_NULL_HANDLE,
-      &imageIndex);
-
-  if (acq_result == VK_ERROR_OUT_OF_DATE_KHR || acq_result == VK_SUBOPTIMAL_KHR ||
-      frame_size_change_) {
-    frame_size_change_ = false;
-    RecreateSwapChain();
-    return;
-  } else if (acq_result != VK_SUCCESS) {
-    ASSERT_EXECPTION(true).SetErrorMessage("failed to present swap chain image!").Throw();
-  }
-
-  vkResetFences(logic_device_, 1, &in_flight_fence_[current_frame_]);
-
-  vkResetCommandBuffer(command_buffer_[current_frame_], /*VkCommandBufferResetFlagBits*/ 0);
-  RecordCommandBuffer(command_buffer_[current_frame_], imageIndex);
-
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-  VkSemaphore waitSemaphores[] = {image_available_semaphore_[current_frame_]};
-  VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-  submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = waitSemaphores;
-  submitInfo.pWaitDstStageMask = waitStages;
-
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &command_buffer_[current_frame_];
-
-  VkSemaphore signalSemaphores[] = {render_finished_semaphore_[current_frame_]};
-  submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = signalSemaphores;
-
-  ASSERT_EXECPTION(
-      vkQueueSubmit(graph_queue_, 1, &submitInfo, in_flight_fence_[current_frame_]) != VK_SUCCESS)
-      .SetErrorMessage("failed to submit draw command buffer!")
-      .Throw();
-
-  VkPresentInfoKHR presentInfo{};
-  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-  presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = signalSemaphores;
-
-  VkSwapchainKHR swapChains[] = {swap_chain_};
-  presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = swapChains;
-
-  presentInfo.pImageIndices = &imageIndex;
-
-  const auto present_result = vkQueuePresentKHR(present_queue_, &presentInfo);
-
-  if (present_result == VK_ERROR_OUT_OF_DATE_KHR || present_result == VK_SUBOPTIMAL_KHR ||
-      frame_size_change_) {
-    frame_size_change_ = false;
-    RecreateSwapChain();
-  } else if (present_result != VK_SUCCESS) {
-    ASSERT_EXECPTION(true).SetErrorMessage("failed to present swap chain image!").Throw();
-  }
-
-  current_frame_ = (current_frame_ + 1) % kMaxFramesInFight;
+  pipeline_ = std::make_shared<GraphPipeLine>(logic_device_, input);
+  pipeline_->Create(swap_chain_extent_, swap_chain_image_format_);
 }
 
+void HelloTriangleApplication::FillVertexBuffer() {
+  const auto& vertices = detail::Input002::vertices;
+
+  VkBufferCreateInfo bufferInfo{};
+  bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  bufferInfo.size = vertices.size() * sizeof(vertices[0]);
+  bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+  bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  CreateVertexBuffer(bufferInfo);
+
+  void* data;
+  vkMapMemory(logic_device_, vertex_buffer_memory_, 0, bufferInfo.size, 0, &data);
+  memcpy(data, vertices.data(), (size_t)bufferInfo.size);
+  vkUnmapMemory(logic_device_, vertex_buffer_memory_);
+}
 }  // namespace vklearn

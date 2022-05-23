@@ -51,19 +51,24 @@ class Application {
   virtual void MainLoop() = 0;
   virtual void CleanUp();
 
-  void CreateInstance();
-  void PickPhysicalDevice();
-  void CreateLogicalDevice();
-  void CreateSurface();
-  void CreateSwapChain();
-  void CreateGraphicsPipeline();
-  void CreateFramebuffers();
-  void CreateCommandPool();
-  void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-  void CreateSyncObjects();
+  virtual void CreateInstance();
+  virtual void PickPhysicalDevice();
+  virtual void CreateLogicalDevice();
+  virtual void CreateSurface();
+  virtual void CreateSwapChain();
+  virtual void CreateGraphicsPipeline() = 0;
+  virtual void CreateFramebuffers();
+  virtual void CreateCommandPool();
+  virtual void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+  virtual void CreateSyncObjects();
 
-  void RecreateSwapChain();
-  void CleanSwapChain();
+  virtual void RecreateSwapChain();
+  virtual void CleanSwapChain();
+  virtual void DrawFrame();
+  virtual void CreateVertexBuffer(const VkBufferCreateInfo& info);
+  virtual void FillVertexBuffer(){};
+
+  uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
   GLFWwindow* window_;
   VkInstance instance_;
@@ -88,7 +93,11 @@ class Application {
   std::vector<VkSemaphore> render_finished_semaphore_;
   std::vector<VkFence> in_flight_fence_;
 
+  VkBuffer vertex_buffer_ = VK_NULL_HANDLE;
+  VkDeviceMemory vertex_buffer_memory_ = VK_NULL_HANDLE;
+
   bool frame_size_change_ = false;
+  int current_frame_ = 0;
 };
 
 }  // namespace vklearn
