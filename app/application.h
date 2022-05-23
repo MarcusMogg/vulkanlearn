@@ -43,6 +43,8 @@ class Application {
 
   virtual int Run();
 
+  void FramebufferResizeCallback(int width, int height) { frame_size_change_ = true; }
+
  protected:
   virtual void InitWindow();
   virtual void InitVulkan();
@@ -59,6 +61,9 @@ class Application {
   void CreateCommandPool();
   void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
   void CreateSyncObjects();
+
+  void RecreateSwapChain();
+  void CleanSwapChain();
 
   GLFWwindow* window_;
   VkInstance instance_;
@@ -82,6 +87,8 @@ class Application {
   std::vector<VkSemaphore> image_available_semaphore_;
   std::vector<VkSemaphore> render_finished_semaphore_;
   std::vector<VkFence> in_flight_fence_;
+
+  bool frame_size_change_ = false;
 };
 
 }  // namespace vklearn

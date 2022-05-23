@@ -18,16 +18,27 @@ void HelloTriangleApplication::MainLoop() {
 
 void HelloTriangleApplication::DrawFrame() {
   vkWaitForFences(logic_device_, 1, &in_flight_fence_[current_frame_], VK_TRUE, UINT64_MAX);
-  vkResetFences(logic_device_, 1, &in_flight_fence_[current_frame_]);
 
   uint32_t imageIndex;
-  vkAcquireNextImageKHR(
+  const auto acq_result = vkAcquireNextImageKHR(
       logic_device_,
       swap_chain_,
       UINT64_MAX,
       image_available_semaphore_[current_frame_],
       VK_NULL_HANDLE,
       &imageIndex);
+
+  if (acq_result == VK_ERROR_OUT_OF_DATE_KHR || acq_result == VK_SUBOPTIMAL_KHR ||
+      frame_size_change_) {
+    frame_size_change_ = false;
+    RecreateSwapChain();
+    return;
+  } else if (acq_result != VK_SUCCESS) {
+    ASSERT_EXECPTION(true).SetErrorMessage("failed to present swap chain image!").Throw();
+  }
+
+  vkResetFences(logic_device_, 1, &in_flight_fence_[current_frame_]);
+
   vkResetCommandBuffer(command_buffer_[current_frame_], /*VkCommandBufferResetFlagBits*/ 0);
   RecordCommandBuffer(command_buffer_[current_frame_], imageIndex);
 
@@ -64,7 +75,15 @@ void HelloTriangleApplication::DrawFrame() {
 
   presentInfo.pImageIndices = &imageIndex;
 
-  vkQueuePresentKHR(present_queue_, &presentInfo);
+  const auto present_result = vkQueuePresentKHR(present_queue_, &presentInfo);
+
+  if (present_result == VK_ERROR_OUT_OF_DATE_KHR || present_result == VK_SUBOPTIMAL_KHR ||
+      frame_size_change_) {
+    frame_size_change_ = false;
+    RecreateSwapChain();
+  } else if (present_result != VK_SUCCESS) {
+    ASSERT_EXECPTION(true).SetErrorMessage("failed to present swap chain image!").Throw();
+  }
 
   current_frame_ = (current_frame_ + 1) % kMaxFramesInFight;
 }

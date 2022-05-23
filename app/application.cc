@@ -93,6 +93,11 @@ VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwi
   }
 }
 
+static void FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
+  auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+  app->FramebufferResizeCallback(width, height);
+}
+
 }  // namespace detail
 }  // namespace vklearn
 
@@ -113,10 +118,10 @@ void Application::InitWindow() {
   glfwInit();
   // no opengl
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  // no window size change
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
   window_ = glfwCreateWindow(width, height, "VulkanLearn", nullptr, nullptr);
+  glfwSetWindowUserPointer(window_, this);
+  glfwSetFramebufferSizeCallback(window_, detail::FramebufferResizeCallback);
 }
 
 void Application::CleanUp() {
@@ -127,14 +132,9 @@ void Application::CleanUp() {
   }
 
   vkDestroyCommandPool(logic_device_, command_pool_, nullptr);
-  for (auto fram : swap_chain_framebuffer_) {
-    vkDestroyFramebuffer(logic_device_, fram, nullptr);
-  }
-  pipeline_.reset();
-  for (auto imageView : swap_chain_image_views_) {
-    vkDestroyImageView(logic_device_, imageView, nullptr);
-  }
-  vkDestroySwapchainKHR(logic_device_, swap_chain_, nullptr);
+
+  CleanSwapChain();
+
   vkDestroyDevice(logic_device_, nullptr);
   layer_.reset();
   vkDestroySurfaceKHR(instance_, surface_, nullptr);
@@ -195,9 +195,11 @@ void Application::InitVulkan() {
   CreateSurface();
   PickPhysicalDevice();
   CreateLogicalDevice();
+
   CreateSwapChain();
   CreateGraphicsPipeline();
   CreateFramebuffers();
+
   CreateCommandPool();
   CreateSyncObjects();
 }
@@ -502,4 +504,33 @@ void Application::CreateSyncObjects() {
         .SetErrorMessage("failed to create render_finished_semaphore_!")
         .Throw();
   }
+}
+
+void Application::RecreateSwapChain() {
+  // handle minimization
+  int width = 0, height = 0;
+  glfwGetFramebufferSize(window_, &width, &height);
+  while (width == 0 || height == 0) {
+    glfwGetFramebufferSize(window_, &width, &height);
+    glfwWaitEvents();
+  }
+
+  vkDeviceWaitIdle(logic_device_);
+  // clear old version
+  CleanSwapChain();
+
+  CreateSwapChain();
+  CreateGraphicsPipeline();
+  CreateFramebuffers();
+}
+
+void Application::CleanSwapChain() {
+  for (auto fram : swap_chain_framebuffer_) {
+    vkDestroyFramebuffer(logic_device_, fram, nullptr);
+  }
+  pipeline_.reset();
+  for (auto imageView : swap_chain_image_views_) {
+    vkDestroyImageView(logic_device_, imageView, nullptr);
+  }
+  vkDestroySwapchainKHR(logic_device_, swap_chain_, nullptr);
 }
