@@ -39,6 +39,7 @@ class Application {
 
   static const int width = 800;
   static const int height = 600;
+  static const int kMaxFramesInFight = 2;
 
   virtual int Run();
 
@@ -76,11 +77,11 @@ class Application {
   VkExtent2D swap_chain_extent_;
 
   VkCommandPool command_pool_;
-  VkCommandBuffer command_buffer_;
+  std::vector<VkCommandBuffer> command_buffer_;
 
-  VkSemaphore image_available_semaphore_;
-  VkSemaphore render_finished_semaphore_;
-  VkFence in_flight_fence_;
+  std::vector<VkSemaphore> image_available_semaphore_;
+  std::vector<VkSemaphore> render_finished_semaphore_;
+  std::vector<VkFence> in_flight_fence_;
 };
 
 }  // namespace vklearn

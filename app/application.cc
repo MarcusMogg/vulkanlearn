@@ -120,10 +120,12 @@ void Application::InitWindow() {
 }
 
 void Application::CleanUp() {
-  layer_.reset();
-  vkDestroySemaphore(logic_device_, image_available_semaphore_, nullptr);
-  vkDestroySemaphore(logic_device_, render_finished_semaphore_, nullptr);
-  vkDestroyFence(logic_device_, in_flight_fence_, nullptr);
+  for (int i = 0; i < kMaxFramesInFight; i++) {
+    vkDestroySemaphore(logic_device_, image_available_semaphore_[i], nullptr);
+    vkDestroySemaphore(logic_device_, render_finished_semaphore_[i], nullptr);
+    vkDestroyFence(logic_device_, in_flight_fence_[i], nullptr);
+  }
+
   vkDestroyCommandPool(logic_device_, command_pool_, nullptr);
   for (auto fram : swap_chain_framebuffer_) {
     vkDestroyFramebuffer(logic_device_, fram, nullptr);
@@ -134,6 +136,7 @@ void Application::CleanUp() {
   }
   vkDestroySwapchainKHR(logic_device_, swap_chain_, nullptr);
   vkDestroyDevice(logic_device_, nullptr);
+  layer_.reset();
   vkDestroySurfaceKHR(instance_, surface_, nullptr);
   vkDestroyInstance(instance_, nullptr);  // all child must destroy before instance
   glfwDestroyWindow(window_);
@@ -433,14 +436,14 @@ void Application::CreateCommandPool() {
       vkCreateCommandPool(logic_device_, &poolInfo, nullptr, &command_pool_) != VK_SUCCESS)
       .SetErrorMessage("failed to create command_pool_")
       .Throw();
-
+  command_buffer_.resize(kMaxFramesInFight);
   VkCommandBufferAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.commandPool = command_pool_;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocInfo.commandBufferCount = 1;
+  allocInfo.commandBufferCount = kMaxFramesInFight;
 
-  if (vkAllocateCommandBuffers(logic_device_, &allocInfo, &command_buffer_) != VK_SUCCESS) {
+  if (vkAllocateCommandBuffers(logic_device_, &allocInfo, command_buffer_.data()) != VK_SUCCESS) {
     throw std::runtime_error("failed to allocate command buffers!");
   }
 }
@@ -477,23 +480,26 @@ void Application::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 void Application::CreateSyncObjects() {
   VkSemaphoreCreateInfo semaphoreInfo{};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-  ASSERT_EXECPTION(
-      vkCreateSemaphore(logic_device_, &semaphoreInfo, nullptr, &image_available_semaphore_) !=
-      VK_SUCCESS)
-      .SetErrorMessage("failed to create image_available_semaphore_!")
-      .Throw();
-
-  ASSERT_EXECPTION(
-      vkCreateSemaphore(logic_device_, &semaphoreInfo, nullptr, &render_finished_semaphore_) !=
-      VK_SUCCESS)
-      .SetErrorMessage("failed to create render_finished_semaphore_!")
-      .Throw();
   VkFenceCreateInfo fenceInfo{};
   fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
   fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-  ASSERT_EXECPTION(
-      vkCreateFence(logic_device_, &fenceInfo, nullptr, &in_flight_fence_) != VK_SUCCESS)
-      .SetErrorMessage("failed to create render_finished_semaphore_!")
-      .Throw();
+  image_available_semaphore_.resize(kMaxFramesInFight);
+  render_finished_semaphore_.resize(kMaxFramesInFight);
+  in_flight_fence_.resize(kMaxFramesInFight);
+  for (int i = 0; i < kMaxFramesInFight; i++) {
+    ASSERT_EXECPTION(
+        vkCreateSemaphore(logic_device_, &semaphoreInfo, nullptr, &image_available_semaphore_[i]) !=
+        VK_SUCCESS)
+        .SetErrorMessage("failed to create image_available_semaphore_!")
+        .Throw();
+    ASSERT_EXECPTION(
+        vkCreateSemaphore(logic_device_, &semaphoreInfo, nullptr, &render_finished_semaphore_[i]) !=
+        VK_SUCCESS)
+        .SetErrorMessage("failed to create render_finished_semaphore_!")
+        .Throw();
+    ASSERT_EXECPTION(
+        vkCreateFence(logic_device_, &fenceInfo, nullptr, &in_flight_fence_[i]) != VK_SUCCESS)
+        .SetErrorMessage("failed to create render_finished_semaphore_!")
+        .Throw();
+  }
 }

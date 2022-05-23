@@ -11,5 +11,7 @@ class HelloTriangleApplication : public Application {
  private:
   virtual void MainLoop() override;
   void DrawFrame();
+
+  int current_frame_ = 0;
 };
 }  // namespace vklearn
