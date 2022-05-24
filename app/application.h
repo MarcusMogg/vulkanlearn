@@ -65,8 +65,16 @@ class Application {
   virtual void RecreateSwapChain();
   virtual void CleanSwapChain();
   virtual void DrawFrame();
-  virtual void CreateVertexBuffer(const VkBufferCreateInfo& info);
+
   virtual void FillVertexBuffer(){};
+
+  void CreateBuffer(
+      VkDeviceSize size,
+      VkBufferUsageFlags usage,
+      VkMemoryPropertyFlags properties,
+      VkBuffer& buffer,
+      VkDeviceMemory& bufferMemory);
+  void CopyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size);
 
   uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 

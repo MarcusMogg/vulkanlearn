@@ -623,24 +623,66 @@ uint32_t Application::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags 
   return 0;
 }
 
-void Application::CreateVertexBuffer(const VkBufferCreateInfo& info) {
-  ASSERT_EXECPTION(vkCreateBuffer(logic_device_, &info, nullptr, &vertex_buffer_) != VK_SUCCESS)
-      .SetErrorMessage("failed to create vertex buffer!")
+void Application::CreateBuffer(
+    VkDeviceSize size,
+    VkBufferUsageFlags usage,
+    VkMemoryPropertyFlags properties,
+    VkBuffer& buffer,
+    VkDeviceMemory& bufferMemory) {
+  VkBufferCreateInfo bufferInfo{};
+  bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  bufferInfo.size = size;
+  bufferInfo.usage = usage;
+  bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  ASSERT_EXECPTION(vkCreateBuffer(logic_device_, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+      .SetErrorMessage("failed to create a buffer!")
       .Throw();
 
   VkMemoryRequirements memRequirements;
-  vkGetBufferMemoryRequirements(logic_device_, vertex_buffer_, &memRequirements);
+  vkGetBufferMemoryRequirements(logic_device_, buffer, &memRequirements);
 
   VkMemoryAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   allocInfo.allocationSize = memRequirements.size;
-  allocInfo.memoryTypeIndex = FindMemoryType(
-      memRequirements.memoryTypeBits,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
 
   ASSERT_EXECPTION(
-      vkAllocateMemory(logic_device_, &allocInfo, nullptr, &vertex_buffer_memory_) != VK_SUCCESS)
+      vkAllocateMemory(logic_device_, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
       .SetErrorMessage("failed to create vertex buffer memory!")
       .Throw();
-  vkBindBufferMemory(logic_device_, vertex_buffer_, vertex_buffer_memory_, 0);
+  vkBindBufferMemory(logic_device_, buffer, bufferMemory, 0);
+}
+
+void Application::CopyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) {
+  VkCommandBufferAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandPool = command_pool_;
+  allocInfo.commandBufferCount = 1;
+
+  VkCommandBuffer commandBuffer;
+  vkAllocateCommandBuffers(logic_device_, &allocInfo, &commandBuffer);
+
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+  vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+  VkBufferCopy copyRegion{};
+  copyRegion.srcOffset = 0;  // Optional
+  copyRegion.dstOffset = 0;  // Optional
+  copyRegion.size = size;
+  vkCmdCopyBuffer(commandBuffer, src, dst, 1, &copyRegion);
+
+  vkEndCommandBuffer(commandBuffer);
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &commandBuffer;
+
+  vkQueueSubmit(graph_queue_, 1, &submitInfo, VK_NULL_HANDLE);
+  vkQueueWaitIdle(graph_queue_);
+  vkFreeCommandBuffers(logic_device_, command_pool_, 1, &commandBuffer);
 }

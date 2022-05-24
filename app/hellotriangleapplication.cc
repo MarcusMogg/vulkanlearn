@@ -102,16 +102,30 @@ void HelloTriangleApplication::CreateGraphicsPipeline() {
 void HelloTriangleApplication::FillVertexBuffer() {
   const auto& vertices = detail::Input002::vertices;
 
-  VkBufferCreateInfo bufferInfo{};
-  bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-  bufferInfo.size = vertices.size() * sizeof(vertices[0]);
-  bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-  bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  CreateVertexBuffer(bufferInfo);
-
+  VkDeviceSize buffersize = vertices.size() * sizeof(vertices[0]);
+  // staging buffer for cpu load data
+  VkBuffer stagingBuffer;
+  VkDeviceMemory stagingBufferMemory;
+  CreateBuffer(
+      buffersize,
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+      stagingBuffer,
+      stagingBufferMemory);
   void* data;
-  vkMapMemory(logic_device_, vertex_buffer_memory_, 0, bufferInfo.size, 0, &data);
-  memcpy(data, vertices.data(), (size_t)bufferInfo.size);
-  vkUnmapMemory(logic_device_, vertex_buffer_memory_);
+  vkMapMemory(logic_device_, stagingBufferMemory, 0, buffersize, 0, &data);
+  memcpy(data, vertices.data(), (size_t)buffersize);
+  vkUnmapMemory(logic_device_, stagingBufferMemory);
+  // real vertex buffer for cpu
+  CreateBuffer(
+      buffersize,
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+      vertex_buffer_,
+      vertex_buffer_memory_);
+
+  CopyBuffer(stagingBuffer, vertex_buffer_, buffersize);
+  vkDestroyBuffer(logic_device_, stagingBuffer, nullptr);
+  vkFreeMemory(logic_device_, stagingBufferMemory, nullptr);
 }
 }  // namespace vklearn
