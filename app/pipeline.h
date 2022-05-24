@@ -17,7 +17,10 @@ class PipeLineInput {
   virtual std::shared_ptr<Shader> GetFragmentShader(const VkDevice device) const = 0;
   virtual std::shared_ptr<VkVertexInputBindingDescription> GetBindingDescription() const = 0;
   virtual std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions() const = 0;
-  virtual uint32_t GetVertexCount() const = 0;
+  // vertex may have differen type
+  virtual const void* GetVertex(uint32_t& length, uint32_t& typesize) const { return nullptr; }
+  // not safe, but sometime we don't need it
+  virtual const std::vector<uint32_t>& GetIndex() const { return {}; }
 };
 
 class GraphPipeLine {
@@ -48,7 +51,11 @@ class GraphPipeLine {
   VkRenderPass RenderPass() const { return render_pass_; }
   VkPipeline GraphicsPipeline() const { return graphics_pipeline_; }
 
-  uint32_t GetVertexCount() const { return param_->GetVertexCount(); }
+  const void* GetVertex(uint32_t& length, uint32_t& typesize) const {
+    return param_->GetVertex(length, typesize);
+  }
+
+  const std::vector<uint32_t>& GetIndex() const { return param_->GetIndex(); }
 
  private:
   const VkDevice logic_device_;

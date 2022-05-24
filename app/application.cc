@@ -127,6 +127,8 @@ void Application::InitWindow() {
 void Application::CleanUp() {
   vkDestroyBuffer(logic_device_, vertex_buffer_, nullptr);
   vkFreeMemory(logic_device_, vertex_buffer_memory_, nullptr);
+  vkDestroyBuffer(logic_device_, index_buffer_, nullptr);
+  vkFreeMemory(logic_device_, index_buffer_memory_, nullptr);
 
   for (int i = 0; i < kMaxFramesInFight; i++) {
     vkDestroySemaphore(logic_device_, image_available_semaphore_[i], nullptr);
@@ -207,6 +209,7 @@ void Application::InitVulkan() {
   CreateSyncObjects();
 
   FillVertexBuffer();
+  FillIndexBuffer();
 }
 
 void Application::PickPhysicalDevice() {
@@ -474,7 +477,10 @@ void Application::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
   VkBuffer vertexBuffers[] = {vertex_buffer_};
   VkDeviceSize offsets[] = {0};
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-  vkCmdDraw(commandBuffer, pipeline_->GetVertexCount(), 1, 0, 0);
+  vkCmdBindIndexBuffer(commandBuffer, index_buffer_, 0, VK_INDEX_TYPE_UINT32);
+  // vkCmdDraw(commandBuffer, pipeline_->GetVertexCount(), 1, 0, 0);
+  vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(pipeline_->GetIndex().size()), 1, 0, 0, 0);
+
   vkCmdEndRenderPass(commandBuffer);
 
   ASSERT_EXECPTION(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)

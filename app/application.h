@@ -66,7 +66,8 @@ class Application {
   virtual void CleanSwapChain();
   virtual void DrawFrame();
 
-  virtual void FillVertexBuffer(){};
+  virtual void FillVertexBuffer() {}
+  virtual void FillIndexBuffer() {}
 
   void CreateBuffer(
       VkDeviceSize size,
@@ -103,6 +104,8 @@ class Application {
 
   VkBuffer vertex_buffer_ = VK_NULL_HANDLE;
   VkDeviceMemory vertex_buffer_memory_ = VK_NULL_HANDLE;
+  VkBuffer index_buffer_ = VK_NULL_HANDLE;
+  VkDeviceMemory index_buffer_memory_ = VK_NULL_HANDLE;
 
   bool frame_size_change_ = false;
   int current_frame_ = 0;
