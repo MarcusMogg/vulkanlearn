@@ -68,6 +68,10 @@ class Application {
 
   virtual void FillVertexBuffer() {}
   virtual void FillIndexBuffer() {}
+  virtual void FillUniformBuffer();
+  virtual void UpdateUniformBuffer(uint32_t currentImage){};
+  void CreateDescriptorPool();
+  void CreateDescriptorSets();
 
   void CreateBuffer(
       VkDeviceSize size,
@@ -109,6 +113,12 @@ class Application {
 
   bool frame_size_change_ = false;
   int current_frame_ = 0;
+
+  std::vector<VkBuffer> uniform_buffers_;
+  std::vector<VkDeviceMemory> uniform_buffers_memory_;
+  VkDescriptorPool descriptor_pool_;
+  // VkDescriptorSet will be clear when descriptor_pool_ destroy
+  std::vector<VkDescriptorSet> descriptor_sets_;
 };
 
 }  // namespace vklearn

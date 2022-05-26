@@ -9,6 +9,7 @@ GraphPipeLine::GraphPipeLine(VkDevice logic_device, const std::shared_ptr<PipeLi
     : logic_device_(logic_device), param_(param) {}
 
 GraphPipeLine::~GraphPipeLine() {
+  vkDestroyDescriptorSetLayout(logic_device_, descriptor_layout_, nullptr);
   vkDestroyPipeline(logic_device_, graphics_pipeline_, nullptr);
   vkDestroyPipelineLayout(logic_device_, pipeline_layout_, nullptr);
   vkDestroyRenderPass(logic_device_, render_pass_, nullptr);
@@ -76,7 +77,7 @@ VkPipelineRasterizationStateCreateInfo GraphPipeLine::RasterizerStage() {
   rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
   rasterizer.lineWidth = 1.0f;
   rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+  rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
   rasterizer.depthBiasConstantFactor = 0.0f;  // Optional
   rasterizer.depthBiasClamp = 0.0f;           // Optional
@@ -161,12 +162,13 @@ VkPipelineShaderStageCreateInfo GraphPipeLine::FragmentShaderStage(const Shader&
 }
 
 void GraphPipeLine::CreateLayout() {
+  CreateDescriptorSetLayout();
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutInfo.setLayoutCount = 0;             // Optional
-  pipelineLayoutInfo.pSetLayouts = nullptr;          // Optional
-  pipelineLayoutInfo.pushConstantRangeCount = 0;     // Optional
-  pipelineLayoutInfo.pPushConstantRanges = nullptr;  // Optional
+  pipelineLayoutInfo.setLayoutCount = 1;                 // Optional
+  pipelineLayoutInfo.pSetLayouts = &descriptor_layout_;  // Optional
+  pipelineLayoutInfo.pushConstantRangeCount = 0;         // Optional
+  pipelineLayoutInfo.pPushConstantRanges = nullptr;      // Optional
 
   ASSERT_EXECPTION(
       vkCreatePipelineLayout(logic_device_, &pipelineLayoutInfo, nullptr, &pipeline_layout_) !=
@@ -257,6 +259,27 @@ void GraphPipeLine::Create(
           logic_device_, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphics_pipeline_) !=
       VK_SUCCESS)
       .SetErrorMessage("failed to create graphics_pipeline!")
+      .Throw();
+}
+
+void GraphPipeLine::CreateDescriptorSetLayout() {
+  VkDescriptorSetLayoutBinding uboLayoutBinding{};
+  uboLayoutBinding.binding = 0;
+  uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uboLayoutBinding.descriptorCount = 1;
+  // which shader stage
+  uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  uboLayoutBinding.pImmutableSamplers = nullptr;  // Optional
+
+  VkDescriptorSetLayoutCreateInfo layoutInfo{};
+  layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  layoutInfo.bindingCount = 1;
+  layoutInfo.pBindings = &uboLayoutBinding;
+
+  ASSERT_EXECPTION(
+      vkCreateDescriptorSetLayout(logic_device_, &layoutInfo, nullptr, &descriptor_layout_) !=
+      VK_SUCCESS)
+      .SetErrorMessage("failed to CreateDescriptorSetLayout!")
       .Throw();
 }
 

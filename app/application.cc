@@ -7,6 +7,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include "../util/assert_exception.h"
 #include "GLFW/glfw3.h"
+#include "buffer_object.h"
 #include "fmt/format.h"
 #include "validationlayer.h"
 #include "vulkan/vulkan.h"
@@ -131,10 +132,14 @@ void Application::CleanUp() {
   vkFreeMemory(logic_device_, index_buffer_memory_, nullptr);
 
   for (int i = 0; i < kMaxFramesInFight; i++) {
+    vkDestroyBuffer(logic_device_, uniform_buffers_[i], nullptr);
+    vkFreeMemory(logic_device_, uniform_buffers_memory_[i], nullptr);
+
     vkDestroySemaphore(logic_device_, image_available_semaphore_[i], nullptr);
     vkDestroySemaphore(logic_device_, render_finished_semaphore_[i], nullptr);
     vkDestroyFence(logic_device_, in_flight_fence_[i], nullptr);
   }
+  vkDestroyDescriptorPool(logic_device_, descriptor_pool_, nullptr);
 
   vkDestroyCommandPool(logic_device_, command_pool_, nullptr);
 
@@ -210,6 +215,9 @@ void Application::InitVulkan() {
 
   FillVertexBuffer();
   FillIndexBuffer();
+  FillUniformBuffer();
+  CreateDescriptorPool();
+  CreateDescriptorSets();
 }
 
 void Application::PickPhysicalDevice() {
@@ -478,6 +486,15 @@ void Application::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
   VkDeviceSize offsets[] = {0};
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
   vkCmdBindIndexBuffer(commandBuffer, index_buffer_, 0, VK_INDEX_TYPE_UINT32);
+  vkCmdBindDescriptorSets(
+      commandBuffer,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      pipeline_->pipeline_layout_,
+      0,
+      1,
+      &descriptor_sets_[current_frame_],
+      0,
+      nullptr);
   // vkCmdDraw(commandBuffer, pipeline_->GetVertexCount(), 1, 0, 0);
   vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(pipeline_->GetIndex().size()), 1, 0, 0, 0);
 
@@ -569,6 +586,8 @@ void Application::DrawFrame() {
 
   vkResetCommandBuffer(command_buffer_[current_frame_], /*VkCommandBufferResetFlagBits*/ 0);
   RecordCommandBuffer(command_buffer_[current_frame_], imageIndex);
+
+  UpdateUniformBuffer(current_frame_);
 
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -691,4 +710,68 @@ void Application::CopyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) {
   vkQueueSubmit(graph_queue_, 1, &submitInfo, VK_NULL_HANDLE);
   vkQueueWaitIdle(graph_queue_);
   vkFreeCommandBuffers(logic_device_, command_pool_, 1, &commandBuffer);
+}
+
+void Application::FillUniformBuffer() {
+  VkDeviceSize buffersize = sizeof(UniformBufferObject);
+
+  uniform_buffers_.resize(kMaxFramesInFight);
+  uniform_buffers_memory_.resize(kMaxFramesInFight);
+
+  for (size_t i = 0; i < kMaxFramesInFight; i++) {
+    CreateBuffer(
+        buffersize,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        uniform_buffers_[i],
+        uniform_buffers_memory_[i]);
+  }
+}
+
+void Application::CreateDescriptorPool() {
+  VkDescriptorPoolSize poolSize{};
+  poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  poolSize.descriptorCount = static_cast<uint32_t>(kMaxFramesInFight);
+  VkDescriptorPoolCreateInfo poolInfo{};
+  poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  poolInfo.poolSizeCount = 1;
+  poolInfo.pPoolSizes = &poolSize;
+  poolInfo.maxSets = static_cast<uint32_t>(kMaxFramesInFight);
+
+  ASSERT_EXECPTION(
+      vkCreateDescriptorPool(logic_device_, &poolInfo, nullptr, &descriptor_pool_) != VK_SUCCESS)
+      .SetErrorMessage("failed to CreateDescriptorPool!")
+      .Throw();
+}
+
+void Application::CreateDescriptorSets() {
+  std::vector<VkDescriptorSetLayout> layouts(kMaxFramesInFight, pipeline_->descriptor_layout_);
+  VkDescriptorSetAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocInfo.descriptorPool = descriptor_pool_;
+  allocInfo.descriptorSetCount = static_cast<uint32_t>(kMaxFramesInFight);
+  allocInfo.pSetLayouts = layouts.data();
+
+  descriptor_sets_.resize(kMaxFramesInFight);
+  ASSERT_EXECPTION(
+      vkAllocateDescriptorSets(logic_device_, &allocInfo, descriptor_sets_.data()) != VK_SUCCESS)
+      .SetErrorMessage("failed to CreateDescriptorSets!")
+      .Throw();
+  for (size_t i = 0; i < kMaxFramesInFight; i++) {
+    VkDescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = uniform_buffers_[i];
+    bufferInfo.offset = 0;
+    bufferInfo.range = sizeof(UniformBufferObject);
+    VkWriteDescriptorSet descriptorWrite{};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = descriptor_sets_[i];
+    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = &bufferInfo;
+    descriptorWrite.pImageInfo = nullptr;        // Optional
+    descriptorWrite.pTexelBufferView = nullptr;  // Optional
+    vkUpdateDescriptorSets(logic_device_, 1, &descriptorWrite, 0, nullptr);
+  }
 }

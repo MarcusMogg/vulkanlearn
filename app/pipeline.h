@@ -44,6 +44,7 @@ class GraphPipeLine {
   VkPipelineShaderStageCreateInfo VertexShaderStage(const Shader& shader);
   VkPipelineShaderStageCreateInfo FragmentShaderStage(const Shader& shader);
 
+  void CreateDescriptorSetLayout();
   void CreateLayout();
   void CreateRenderPass(VkFormat swap_chain_image_format);
   void Create(const VkExtent2D& swap_chain_extent, const VkFormat swap_chain_image_format);
@@ -57,10 +58,13 @@ class GraphPipeLine {
 
   const std::vector<uint32_t>& GetIndex() const { return param_->GetIndex(); }
 
+  VkDescriptorSetLayout descriptor_layout_;
+  VkPipelineLayout pipeline_layout_;
+
  private:
   const VkDevice logic_device_;
   const std::shared_ptr<PipeLineInput> param_;
-  VkPipelineLayout pipeline_layout_;
+
   VkRenderPass render_pass_;
   VkPipeline graphics_pipeline_;
 };

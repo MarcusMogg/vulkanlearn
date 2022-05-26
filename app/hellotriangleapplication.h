@@ -15,5 +15,7 @@ class HelloTriangleApplication : public Application {
   virtual void CreateGraphicsPipeline() override;
   virtual void FillVertexBuffer() override;
   virtual void FillIndexBuffer() override;
+
+  virtual void UpdateUniformBuffer(uint32_t currentImage) override;
 };
 }  // namespace vklearn

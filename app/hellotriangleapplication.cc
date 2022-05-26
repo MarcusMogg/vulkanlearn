@@ -1,10 +1,13 @@
 #include "hellotriangleapplication.h"
 
 #define GLFW_INCLUDE_VULKAN
+#include <chrono>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "../util/assert_exception.h"
 #include "GLFW/glfw3.h"
+#include "buffer_object.h"
 #include "vulkan/vulkan.h"
 
 namespace vklearn {
@@ -93,12 +96,12 @@ class Input003 : public PipeLineInput {
 
   virtual std::shared_ptr<Shader> GetVertexShader(const VkDevice device) const {
     std::shared_ptr<Shader> shader = std::make_shared<Shader>(device);
-    shader->Load("./shaders/002/shader.vert");
+    shader->Load("./shaders/003/shader.vert");
     return shader;
   }
   virtual std::shared_ptr<Shader> GetFragmentShader(const VkDevice device) const {
     std::shared_ptr<Shader> shader = std::make_shared<Shader>(device);
-    shader->Load("./shaders/002/shader.frag");
+    shader->Load("./shaders/003/shader.frag");
     return shader;
   }
   virtual std::shared_ptr<VkVertexInputBindingDescription> GetBindingDescription() const {
@@ -219,6 +222,28 @@ void HelloTriangleApplication::FillIndexBuffer() {
   CopyBuffer(stagingBuffer, index_buffer_, buffersize);
   vkDestroyBuffer(logic_device_, stagingBuffer, nullptr);
   vkFreeMemory(logic_device_, stagingBufferMemory, nullptr);
+}
+
+void HelloTriangleApplication::UpdateUniformBuffer(uint32_t currentImage) {
+  static auto startTime = std::chrono::high_resolution_clock::now();
+
+  auto currentTime = std::chrono::high_resolution_clock::now();
+  float time =
+      std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+  UniformBufferObject ubo{};
+  ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+  ubo.view = glm::lookAt(
+      glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+  ubo.proj = glm::perspective(
+      glm::radians(45.0f),
+      1.0f * swap_chain_extent_.width / swap_chain_extent_.height,
+      0.1f,
+      10.0f);
+  ubo.proj[1][1] *= -1;
+  void* data;
+  vkMapMemory(logic_device_, uniform_buffers_memory_[currentImage], 0, sizeof(ubo), 0, &data);
+  memcpy(data, &ubo, sizeof(ubo));
+  vkUnmapMemory(logic_device_, uniform_buffers_memory_[currentImage]);
 }
 
 }  // namespace vklearn

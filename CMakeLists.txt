@@ -16,7 +16,7 @@ add_executable (vulkanlearn
 	"app/application.h"  "app/application.cc" 
 	"app/hellotriangleapplication.h" "app/hellotriangleapplication.cc"
 	"util/log.h" 
-	"util/assert_exception.h" "util/assert_exception.cc" "app/validationlayer.h" "app/validationlayer.cc" "shaders/shaderloader.h" "shaders/shaderloader.cc" "app/pipeline.h" "app/pipeline.cc")
+	"util/assert_exception.h" "util/assert_exception.cc" "app/validationlayer.h" "app/validationlayer.cc" "shaders/shaderloader.h" "shaders/shaderloader.cc" "app/pipeline.h" "app/pipeline.cc" "app/buffer_object.h")
 
 target_compile_features(vulkanlearn PRIVATE cxx_std_17)
 
