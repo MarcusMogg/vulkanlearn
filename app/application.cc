@@ -1,6 +1,7 @@
 #include "application.h"
 
 #include <algorithm>
+#include <array>
 #include <set>
 #include <vector>
 
@@ -144,6 +145,10 @@ void Application::CleanUp() {
   vkDestroyCommandPool(logic_device_, command_pool_, nullptr);
 
   CleanSwapChain();
+  vkDestroySampler(logic_device_, texture_sampler_, nullptr);
+  vkDestroyImageView(logic_device_, texture_image_view_, nullptr);
+  vkDestroyImage(logic_device_, texture_image_, nullptr);
+  vkFreeMemory(logic_device_, texture_image_memory_, nullptr);
 
   vkDestroyDevice(logic_device_, nullptr);
   layer_.reset();
@@ -216,6 +221,9 @@ void Application::InitVulkan() {
   FillVertexBuffer();
   FillIndexBuffer();
   FillUniformBuffer();
+  CreateTextureImage();
+  CreateTextureSampler();
+
   CreateDescriptorPool();
   CreateDescriptorSets();
 }
@@ -392,25 +400,7 @@ void Application::CreateSwapChain() {
 
   swap_chain_image_views_.resize(imageCount);
   for (size_t i = 0; i < imageCount; i++) {
-    VkImageViewCreateInfo imgviewcreateInfo{};
-    imgviewcreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    imgviewcreateInfo.image = swap_chain_images_[i];
-    imgviewcreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    imgviewcreateInfo.format = swap_chain_image_format_;
-    imgviewcreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imgviewcreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imgviewcreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imgviewcreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imgviewcreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    imgviewcreateInfo.subresourceRange.baseMipLevel = 0;
-    imgviewcreateInfo.subresourceRange.levelCount = 1;
-    imgviewcreateInfo.subresourceRange.baseArrayLayer = 0;
-    imgviewcreateInfo.subresourceRange.layerCount = 1;
-    ASSERT_EXECPTION(
-        vkCreateImageView(
-            logic_device_, &imgviewcreateInfo, nullptr, &swap_chain_image_views_[i]) != VK_SUCCESS)
-        .SetErrorMessage("failed to create image views")
-        .Throw();
+    swap_chain_image_views_[i] = CreateImageView(swap_chain_images_[i], swap_chain_image_format_);
   }
 }
 
@@ -680,20 +670,7 @@ void Application::CreateBuffer(
 }
 
 void Application::CopyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) {
-  VkCommandBufferAllocateInfo allocInfo{};
-  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocInfo.commandPool = command_pool_;
-  allocInfo.commandBufferCount = 1;
-
-  VkCommandBuffer commandBuffer;
-  vkAllocateCommandBuffers(logic_device_, &allocInfo, &commandBuffer);
-
-  VkCommandBufferBeginInfo beginInfo{};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-  vkBeginCommandBuffer(commandBuffer, &beginInfo);
+  VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
   VkBufferCopy copyRegion{};
   copyRegion.srcOffset = 0;  // Optional
@@ -701,15 +678,7 @@ void Application::CopyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) {
   copyRegion.size = size;
   vkCmdCopyBuffer(commandBuffer, src, dst, 1, &copyRegion);
 
-  vkEndCommandBuffer(commandBuffer);
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &commandBuffer;
-
-  vkQueueSubmit(graph_queue_, 1, &submitInfo, VK_NULL_HANDLE);
-  vkQueueWaitIdle(graph_queue_);
-  vkFreeCommandBuffers(logic_device_, command_pool_, 1, &commandBuffer);
+  EndSingleTimeCommands(commandBuffer);
 }
 
 void Application::FillUniformBuffer() {
@@ -729,13 +698,15 @@ void Application::FillUniformBuffer() {
 }
 
 void Application::CreateDescriptorPool() {
-  VkDescriptorPoolSize poolSize{};
-  poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  poolSize.descriptorCount = static_cast<uint32_t>(kMaxFramesInFight);
+  std::array<VkDescriptorPoolSize, 2> poolSizes{};
+  poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  poolSizes[0].descriptorCount = static_cast<uint32_t>(kMaxFramesInFight);
+  poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  poolSizes[1].descriptorCount = static_cast<uint32_t>(kMaxFramesInFight);
   VkDescriptorPoolCreateInfo poolInfo{};
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  poolInfo.poolSizeCount = 1;
-  poolInfo.pPoolSizes = &poolSize;
+  poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+  poolInfo.pPoolSizes = poolSizes.data();
   poolInfo.maxSets = static_cast<uint32_t>(kMaxFramesInFight);
 
   ASSERT_EXECPTION(
@@ -762,16 +733,191 @@ void Application::CreateDescriptorSets() {
     bufferInfo.buffer = uniform_buffers_[i];
     bufferInfo.offset = 0;
     bufferInfo.range = sizeof(UniformBufferObject);
-    VkWriteDescriptorSet descriptorWrite{};
-    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = descriptor_sets_[i];
-    descriptorWrite.dstBinding = 0;
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pBufferInfo = &bufferInfo;
-    descriptorWrite.pImageInfo = nullptr;        // Optional
-    descriptorWrite.pTexelBufferView = nullptr;  // Optional
-    vkUpdateDescriptorSets(logic_device_, 1, &descriptorWrite, 0, nullptr);
+    VkDescriptorImageInfo imageInfo{};
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfo.imageView = texture_image_view_;
+    imageInfo.sampler = texture_sampler_;
+    std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+    descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrites[0].dstSet = descriptor_sets_[i];
+    descriptorWrites[0].dstBinding = 0;
+    descriptorWrites[0].dstArrayElement = 0;
+    descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrites[0].descriptorCount = 1;
+    descriptorWrites[0].pBufferInfo = &bufferInfo;
+    descriptorWrites[0].pImageInfo = nullptr;        // Optional
+    descriptorWrites[0].pTexelBufferView = nullptr;  // Optional
+
+    descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrites[1].dstSet = descriptor_sets_[i];
+    descriptorWrites[1].dstBinding = 1;
+    descriptorWrites[1].dstArrayElement = 0;
+    descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorWrites[1].descriptorCount = 1;
+    descriptorWrites[1].pImageInfo = &imageInfo;
+
+    vkUpdateDescriptorSets(
+        logic_device_,
+        static_cast<uint32_t>(descriptorWrites.size()),
+        descriptorWrites.data(),
+        0,
+        nullptr);
   }
+}
+
+void Application::CreateImage(
+    uint32_t width,
+    uint32_t height,
+    VkFormat format,
+    VkImageTiling tiling,
+    VkImageUsageFlags usage,
+    VkMemoryPropertyFlags properties,
+    VkImage& image,
+    VkDeviceMemory& imageMemory) {
+  VkImageCreateInfo imageInfo{};
+  imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  imageInfo.imageType = VK_IMAGE_TYPE_2D;
+  imageInfo.extent.width = static_cast<uint32_t>(width);
+  imageInfo.extent.height = static_cast<uint32_t>(height);
+  imageInfo.extent.depth = 1;
+  imageInfo.mipLevels = 1;
+  imageInfo.arrayLayers = 1;
+  imageInfo.format = format;
+  imageInfo.tiling = tiling;
+  imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageInfo.usage = usage;
+  imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  imageInfo.flags = 0;  // Optional
+  ASSERT_EXECPTION(vkCreateImage(logic_device_, &imageInfo, nullptr, &image) != VK_SUCCESS)
+      .SetErrorMessage("failed to create texture!")
+      .Throw();
+  VkMemoryRequirements memRequirements;
+  vkGetImageMemoryRequirements(logic_device_, image, &memRequirements);
+
+  VkMemoryAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = memRequirements.size;
+  allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
+
+  ASSERT_EXECPTION(vkAllocateMemory(logic_device_, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
+      .SetErrorMessage("failed to create image memory!")
+      .Throw();
+
+  vkBindImageMemory(logic_device_, image, imageMemory, 0);
+}
+
+VkCommandBuffer Application::BeginSingleTimeCommands() {
+  VkCommandBufferAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandPool = command_pool_;
+  allocInfo.commandBufferCount = 1;
+
+  VkCommandBuffer commandBuffer;
+  vkAllocateCommandBuffers(logic_device_, &allocInfo, &commandBuffer);
+
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+  vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+  return commandBuffer;
+}
+
+void Application::EndSingleTimeCommands(VkCommandBuffer commandBuffer) {
+  vkEndCommandBuffer(commandBuffer);
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &commandBuffer;
+
+  vkQueueSubmit(graph_queue_, 1, &submitInfo, VK_NULL_HANDLE);
+  vkQueueWaitIdle(graph_queue_);
+  vkFreeCommandBuffers(logic_device_, command_pool_, 1, &commandBuffer);
+}
+
+void Application::TransitionImageLayout(
+    VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
+  VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+  VkImageMemoryBarrier barrier{};
+  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier.oldLayout = oldLayout;
+  barrier.newLayout = newLayout;
+  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.image = image;
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.levelCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+  VkPipelineStageFlags sourceStage;
+  VkPipelineStageFlags destinationStage;
+
+  if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+  } else if (
+      oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+      newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  } else {
+    ASSERT_EXECPTION(true).SetErrorMessage("unsupported layout transition!").Throw();
+  }
+  vkCmdPipelineBarrier(
+      commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+  EndSingleTimeCommands(commandBuffer);
+}
+
+void Application::CopyBufferToImage(
+    VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
+  VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+  VkBufferImageCopy region{};
+  region.bufferOffset = 0;
+  region.bufferRowLength = 0;
+  region.bufferImageHeight = 0;
+
+  region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.imageSubresource.mipLevel = 0;
+  region.imageSubresource.baseArrayLayer = 0;
+  region.imageSubresource.layerCount = 1;
+
+  region.imageOffset = {0, 0, 0};
+  region.imageExtent = {width, height, 1};
+
+  vkCmdCopyBufferToImage(
+      commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+  EndSingleTimeCommands(commandBuffer);
+}
+
+VkImageView Application::CreateImageView(VkImage image, VkFormat format) {
+  VkImageViewCreateInfo viewInfo{};
+  viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  viewInfo.image = image;
+  viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  viewInfo.format = format;
+  viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  viewInfo.subresourceRange.baseMipLevel = 0;
+  viewInfo.subresourceRange.levelCount = 1;
+  viewInfo.subresourceRange.baseArrayLayer = 0;
+  viewInfo.subresourceRange.layerCount = 1;
+
+  VkImageView imageView;
+  ASSERT_EXECPTION(vkCreateImageView(logic_device_, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
+      .SetErrorMessage("failed to create image view!")
+      .Throw();
+
+  return imageView;
 }

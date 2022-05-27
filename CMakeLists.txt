@@ -9,17 +9,25 @@ find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(fmt CONFIG REQUIRED)
-
+find_path(STB_INCLUDE_DIRS "stb.h")
+    
 # 将源代码添加到此项目的可执行文件。
 add_executable (vulkanlearn 
 	"vulkanlearn.cpp" "vulkanlearn.h" 
 	"app/application.h"  "app/application.cc" 
 	"app/hellotriangleapplication.h" "app/hellotriangleapplication.cc"
 	"util/log.h" 
-	"util/assert_exception.h" "util/assert_exception.cc" "app/validationlayer.h" "app/validationlayer.cc" "shaders/shaderloader.h" "shaders/shaderloader.cc" "app/pipeline.h" "app/pipeline.cc" "app/buffer_object.h")
+	"util/assert_exception.h" "util/assert_exception.cc" 
+	"app/validationlayer.h" "app/validationlayer.cc" 
+	"shaders/shaderloader.h" "shaders/shaderloader.cc" 
+	"app/pipeline.h" "app/pipeline.cc" 
+	"app/buffer_object.h" 
+	"texture/texture.h" "texture/texture.cc"
+)
 
 target_compile_features(vulkanlearn PRIVATE cxx_std_17)
 
+target_include_directories(vulkanlearn PRIVATE ${STB_INCLUDE_DIRS})
 target_link_libraries(vulkanlearn
 	PRIVATE
 		glfw

@@ -73,6 +73,25 @@ class Application {
   void CreateDescriptorPool();
   void CreateDescriptorSets();
 
+  virtual void CreateTextureImage() {}
+  virtual void CreateTextureSampler() {}
+
+  void CreateImage(
+      uint32_t width,
+      uint32_t height,
+      VkFormat format,
+      VkImageTiling tiling,
+      VkImageUsageFlags usage,
+      VkMemoryPropertyFlags properties,
+      VkImage& image,
+      VkDeviceMemory& imageMemory);
+  VkImageView CreateImageView(VkImage image, VkFormat format);
+  VkCommandBuffer BeginSingleTimeCommands();
+  void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+  void TransitionImageLayout(
+      VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
+
   void CreateBuffer(
       VkDeviceSize size,
       VkBufferUsageFlags usage,
@@ -80,6 +99,7 @@ class Application {
       VkBuffer& buffer,
       VkDeviceMemory& bufferMemory);
   void CopyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size);
+  void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
   uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
@@ -119,6 +139,11 @@ class Application {
   VkDescriptorPool descriptor_pool_;
   // VkDescriptorSet will be clear when descriptor_pool_ destroy
   std::vector<VkDescriptorSet> descriptor_sets_;
+
+  VkImage texture_image_;
+  VkImageView texture_image_view_;
+  VkDeviceMemory texture_image_memory_;
+  VkSampler texture_sampler_;
 };
 
 }  // namespace vklearn
