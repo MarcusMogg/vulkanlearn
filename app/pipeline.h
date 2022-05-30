@@ -25,7 +25,10 @@ class PipeLineInput {
 
 class GraphPipeLine {
  public:
-  GraphPipeLine(VkDevice logic_device, const std::shared_ptr<PipeLineInput>& param);
+  GraphPipeLine(
+      VkDevice logic_device,
+      VkPhysicalDevice physical_device,
+      const std::shared_ptr<PipeLineInput>& param);
   ~GraphPipeLine();
 
   VkPipelineVertexInputStateCreateInfo VertexInputStage(
@@ -63,6 +66,7 @@ class GraphPipeLine {
 
  private:
   const VkDevice logic_device_;
+  const VkPhysicalDevice physical_device_;
   const std::shared_ptr<PipeLineInput> param_;
 
   VkRenderPass render_pass_;

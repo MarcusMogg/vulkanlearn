@@ -1,6 +1,10 @@
 #include "hellotriangleapplication.h"
 
 #define GLFW_INCLUDE_VULKAN
+#define GLM_FORCE_RADIANS
+// default is opengl [-1.0,1.0], bug vulkan is [0,1.0]
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+
 #include <chrono>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -178,12 +182,17 @@ const std::vector<Input003::Vertex> Input003::vertices = {
 const std::vector<uint32_t> Input003::indices = {0, 1, 2, 2, 3, 0};
 
 const std::vector<Vertex> Input004::vertices = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}};
+    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 
-const std::vector<uint32_t> Input004::indices = {0, 1, 2, 2, 3, 0};
+    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}};
+
+const std::vector<uint32_t> Input004::indices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
 
 }  // namespace detail
 
@@ -199,7 +208,7 @@ void HelloTriangleApplication::MainLoop() {
 void HelloTriangleApplication::CreateGraphicsPipeline() {
   std::shared_ptr<PipeLineInput> input = std::make_shared<detail::Input004>();
 
-  pipeline_ = std::make_shared<GraphPipeLine>(logic_device_, input);
+  pipeline_ = std::make_shared<GraphPipeLine>(logic_device_, physical_device_, input);
   pipeline_->Create(swap_chain_extent_, swap_chain_image_format_);
 }
 
@@ -333,7 +342,8 @@ void HelloTriangleApplication::CreateTextureImage() {
       VK_FORMAT_R8G8B8A8_SRGB,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-  texture_image_view_ = CreateImageView(texture_image_, VK_FORMAT_R8G8B8A8_SRGB);
+  texture_image_view_ =
+      CreateImageView(texture_image_, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
   vkDestroyBuffer(logic_device_, stagingBuffer, nullptr);
   vkFreeMemory(logic_device_, stagingBufferMemory, nullptr);
 }

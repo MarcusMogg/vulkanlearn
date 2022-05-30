@@ -44,6 +44,11 @@ class Application {
   virtual int Run();
 
   void FramebufferResizeCallback(int width, int height) { frame_size_change_ = true; }
+  static VkFormat FindSupportedFormat(
+      VkPhysicalDevice physical_device,
+      const std::vector<VkFormat>& candidates,
+      const VkImageTiling tiling,
+      const VkFormatFeatureFlags features);
 
  protected:
   virtual void InitWindow();
@@ -56,6 +61,8 @@ class Application {
   virtual void CreateLogicalDevice();
   virtual void CreateSurface();
   virtual void CreateSwapChain();
+  virtual void CreateDepthResources();
+
   virtual void CreateGraphicsPipeline() = 0;
   virtual void CreateFramebuffers();
   virtual void CreateCommandPool();
@@ -85,7 +92,7 @@ class Application {
       VkMemoryPropertyFlags properties,
       VkImage& image,
       VkDeviceMemory& imageMemory);
-  VkImageView CreateImageView(VkImage image, VkFormat format);
+  VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags);
   VkCommandBuffer BeginSingleTimeCommands();
   void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 
@@ -116,6 +123,11 @@ class Application {
   std::vector<VkImage> swap_chain_images_;
   std::vector<VkImageView> swap_chain_image_views_;
   std::vector<VkFramebuffer> swap_chain_framebuffer_;
+
+  std::vector<VkImage> depth_images_;
+  std::vector<VkImageView> depth_image_views_;
+  std::vector<VkDeviceMemory> depth_images_memory_;
+
   VkFormat swap_chain_image_format_;
   VkExtent2D swap_chain_extent_;
 
