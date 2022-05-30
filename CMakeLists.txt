@@ -10,6 +10,8 @@ find_package(glm REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_path(STB_INCLUDE_DIRS "stb.h")
+find_package(tinyobjloader CONFIG REQUIRED)
+
     
 # 将源代码添加到此项目的可执行文件。
 add_executable (vulkanlearn 
@@ -23,7 +25,8 @@ add_executable (vulkanlearn
 	"app/pipeline.h" "app/pipeline.cc" 
 	"app/buffer_object.h" 
 	"texture/texture.h" "texture/texture.cc"
-)
+	"resources/model.h" "resources/model.cc" 
+	"app/objmodelapplication.h" "app/objmodelapplication.cc")
 
 target_compile_features(vulkanlearn PRIVATE cxx_std_17)
 
@@ -33,6 +36,7 @@ target_link_libraries(vulkanlearn
 		glfw
 		Vulkan::Vulkan
 		fmt::fmt
+		tinyobjloader::tinyobjloader
 )
 
 # TODO: 如有需要，请添加测试并安装目标。

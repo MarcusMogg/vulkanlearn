@@ -6,6 +6,7 @@ import os
 
 shader_path = os.path.abspath("./shaders")
 tex_path = os.path.abspath("./texture")
+res_path = os.path.abspath("./resources")
 
 build_path = os.path.abspath("./out/build/x64-debug")
 
@@ -49,3 +50,4 @@ def CopyImage(filepath, relativepath, filename):
 
 TraverseDir(shader_path, "shaders", BuildGlsl)
 TraverseDir(tex_path, "texture", CopyImage)
+TraverseDir(res_path, "resources", CopyImage)

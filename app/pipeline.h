@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../shaders/shaderloader.h"
+#include "../texture/texture.h"
 #include "vulkan/vulkan.h"
 
 namespace vklearn {
@@ -21,6 +22,7 @@ class PipeLineInput {
   virtual const void* GetVertex(uint32_t& length, uint32_t& typesize) const { return nullptr; }
   // not safe, but sometime we don't need it
   virtual const std::vector<uint32_t>& GetIndex() const { return {}; }
+  virtual std::shared_ptr<Texture> GetTexture() const { return nullptr; }
 };
 
 class GraphPipeLine {

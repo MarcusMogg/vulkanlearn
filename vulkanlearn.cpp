@@ -6,12 +6,13 @@
 #include <iostream>
 
 #include "app/hellotriangleapplication.h"
+#include "app/objmodelapplication.h"
 
 using namespace std;
 using namespace vklearn;
 
 int main() {
-  HelloTriangleApplication app;
+  ObjModelApplication app;
 
   app.Run();
 

@@ -221,10 +221,11 @@ void Application::InitVulkan() {
   CreateCommandPool();
 
   CreateDepthResources();
-  CreateGraphicsPipeline();
-  CreateFramebuffers();
 
   CreateSyncObjects();
+
+  CreateGraphicsPipeline();
+  CreateFramebuffers();
 
   FillVertexBuffer();
   FillIndexBuffer();
