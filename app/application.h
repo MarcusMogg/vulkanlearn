@@ -86,18 +86,28 @@ class Application {
   void CreateImage(
       uint32_t width,
       uint32_t height,
+      uint32_t mipleavel,
       VkFormat format,
       VkImageTiling tiling,
       VkImageUsageFlags usage,
       VkMemoryPropertyFlags properties,
       VkImage& image,
       VkDeviceMemory& imageMemory);
-  VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags);
+  VkImageView CreateImageView(
+      VkImage image,
+      VkFormat format,
+      VkImageAspectFlags aspect_flags,
+      const uint32_t mipleavel = 1);
+  void GenerateMipmaps(VkImage image, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
   VkCommandBuffer BeginSingleTimeCommands();
   void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 
   void TransitionImageLayout(
-      VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
+      VkImage image,
+      VkFormat format,
+      VkImageLayout old_layout,
+      VkImageLayout new_layout,
+      uint32_t mipleavel);
 
   void CreateBuffer(
       VkDeviceSize size,

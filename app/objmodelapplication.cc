@@ -183,9 +183,11 @@ void ObjModelApplication::CreateTextureImage() {
   CreateImage(
       texWidth,
       texHeight,
+      tex_->GetMipLevel(),
       VK_FORMAT_R8G8B8A8_SRGB,
       VK_IMAGE_TILING_OPTIMAL,
-      VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+      VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+          VK_IMAGE_USAGE_SAMPLED_BIT,
       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
       texture_image_,
       texture_image_memory_);
@@ -194,24 +196,30 @@ void ObjModelApplication::CreateTextureImage() {
       texture_image_,
       VK_FORMAT_R8G8B8A8_SRGB,
       VK_IMAGE_LAYOUT_UNDEFINED,
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      tex_->GetMipLevel());
   CopyBufferToImage(
       stagingBuffer,
       texture_image_,
       static_cast<uint32_t>(texWidth),
       static_cast<uint32_t>(texHeight));
-  TransitionImageLayout(
-      texture_image_,
-      VK_FORMAT_R8G8B8A8_SRGB,
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-  texture_image_view_ =
-      CreateImageView(texture_image_, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+  // TransitionImageLayout(
+  //     texture_image_,
+  //     VK_FORMAT_R8G8B8A8_SRGB,
+  //     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+  //     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+  //     tex_->GetMipLevel());
+
   vkDestroyBuffer(logic_device_, stagingBuffer, nullptr);
   vkFreeMemory(logic_device_, stagingBufferMemory, nullptr);
+
+  GenerateMipmaps(texture_image_, texWidth, texHeight, tex_->GetMipLevel());
+  texture_image_view_ = CreateImageView(
+      texture_image_, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, tex_->GetMipLevel());
 }
 
 void ObjModelApplication::CreateTextureSampler() {
+  std::shared_ptr<Texture> tex_ = input_->GetTexture();
   VkSamplerCreateInfo samplerInfo{};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
   samplerInfo.magFilter = VK_FILTER_LINEAR;
@@ -236,8 +244,9 @@ void ObjModelApplication::CreateTextureSampler() {
 
   samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
   samplerInfo.mipLodBias = 0.0f;
-  samplerInfo.minLod = 0.0f;
-  samplerInfo.maxLod = 0.0f;
+  samplerInfo.minLod = 0;
+  samplerInfo.maxLod = static_cast<float>(tex_->GetMipLevel());
+
   ASSERT_EXECPTION(
       vkCreateSampler(logic_device_, &samplerInfo, nullptr, &texture_sampler_) != VK_SUCCESS)
       .SetErrorMessage("failed to create texture_sampler_!")

@@ -320,6 +320,7 @@ void HelloTriangleApplication::CreateTextureImage() {
   CreateImage(
       texWidth,
       texHeight,
+      1,
       VK_FORMAT_R8G8B8A8_SRGB,
       VK_IMAGE_TILING_OPTIMAL,
       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -331,7 +332,8 @@ void HelloTriangleApplication::CreateTextureImage() {
       texture_image_,
       VK_FORMAT_R8G8B8A8_SRGB,
       VK_IMAGE_LAYOUT_UNDEFINED,
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      1);
   CopyBufferToImage(
       stagingBuffer,
       texture_image_,
@@ -341,7 +343,8 @@ void HelloTriangleApplication::CreateTextureImage() {
       texture_image_,
       VK_FORMAT_R8G8B8A8_SRGB,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      1);
   texture_image_view_ =
       CreateImageView(texture_image_, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
   vkDestroyBuffer(logic_device_, stagingBuffer, nullptr);
