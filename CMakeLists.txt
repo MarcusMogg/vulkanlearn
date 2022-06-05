@@ -9,7 +9,7 @@ find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(fmt CONFIG REQUIRED)
-find_path(STB_INCLUDE_DIRS "stb.h")
+find_path(STB_INCLUDE_DIRS "stb_image.h")
 find_package(tinyobjloader CONFIG REQUIRED)
 
     
