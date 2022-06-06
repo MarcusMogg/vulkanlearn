@@ -3,18 +3,6 @@
 
 #include "vulkanlearn.h"
 
-#include <iostream>
-
-#include "app/hellotriangleapplication.h"
-#include "app/objmodelapplication.h"
-
 using namespace std;
-using namespace vklearn;
 
-int main() {
-  ObjModelApplication app;
-
-  app.Run();
-
-  return 0;
-}
+int main() { return 0; }
