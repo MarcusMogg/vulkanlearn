@@ -5,4 +5,9 @@
 
 using namespace std;
 
-int main() { return 0; }
+int main() {
+  vkengine::Engine e;
+  e.Start();
+  e.Shutdown();
+  return 0;
+}
