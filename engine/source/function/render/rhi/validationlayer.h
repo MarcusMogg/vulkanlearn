@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "vulkan/vulkan.h"
-namespace vklearn {
+namespace vkengine {
 
 static const std::vector<const char*> kValidationLayers = {"VK_LAYER_KHRONOS_validation"};
 #ifdef NDEBUG
@@ -18,12 +18,12 @@ class ValidationLayer {
   ~ValidationLayer();
 
   static void Check();
-  void Init();
+  void        Init();
 
  private:
-  VkInstance instance_;
+  VkInstance               instance_;
   VkDebugUtilsMessengerEXT debug_messenger_;
 
   static bool CheckValidationLayersSupport();
 };
-}  // namespace vklearn
+}  // namespace vkengine

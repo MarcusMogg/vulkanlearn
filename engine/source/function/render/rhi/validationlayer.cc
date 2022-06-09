@@ -3,28 +3,28 @@
 #define GLFW_INCLUDE_VULKAN
 #include <iostream>
 
-#include "../util/assert_exception.h"
 #include "GLFW/glfw3.h"
+#include "core/exception/assert_exception.h"
 #include "vulkan/vulkan.h"
 
-namespace vklearn {
+namespace vkengine {
 namespace detail {
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT             messageType,
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    void* pUserData) {
+    void*                                       pUserData) {
   std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
   return VK_FALSE;
 }
 
 VkResult CreateDebugUtilsMessengerEXT(
-    VkInstance instance,
+    VkInstance                                instance,
     const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-    const VkAllocationCallbacks* pAllocator,
-    VkDebugUtilsMessengerEXT* pDebugMessenger) {
+    const VkAllocationCallbacks*              pAllocator,
+    VkDebugUtilsMessengerEXT*                 pDebugMessenger) {
   auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
       instance, "vkCreateDebugUtilsMessengerEXT");
   if (func != nullptr) {
@@ -35,8 +35,8 @@ VkResult CreateDebugUtilsMessengerEXT(
 }
 
 void DestroyDebugUtilsMessengerEXT(
-    VkInstance instance,
-    VkDebugUtilsMessengerEXT debugMessenger,
+    VkInstance                   instance,
+    VkDebugUtilsMessengerEXT     debugMessenger,
     const VkAllocationCallbacks* pAllocator) {
   auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
       instance, "vkDestroyDebugUtilsMessengerEXT");
@@ -84,7 +84,7 @@ ValidationLayer::~ValidationLayer() {
 void ValidationLayer::Init() {
   if (kEnableValidationLayers) {
     VkDebugUtilsMessengerCreateInfoEXT createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    createInfo.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
                                  VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                                  VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
@@ -92,7 +92,7 @@ void ValidationLayer::Init() {
                              VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
                              VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     createInfo.pfnUserCallback = detail::DebugCallback;
-    createInfo.pUserData = nullptr;  // Optional
+    createInfo.pUserData       = nullptr;  // Optional
     ASSERT_EXECPTION(
         detail::CreateDebugUtilsMessengerEXT(instance_, &createInfo, nullptr, &debug_messenger_) !=
         VK_SUCCESS)
@@ -101,4 +101,4 @@ void ValidationLayer::Init() {
   }
 }
 
-}  // namespace vklearn
+}  // namespace vkengine
