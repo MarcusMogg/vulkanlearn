@@ -5,6 +5,7 @@
 
 #include "GLFW/glfw3.h"
 #include "core/exception/assert_exception.h"
+#include "core/utils/ccn_utils.h"
 #include "vulkan/vulkan.h"
 
 namespace vkengine {
@@ -15,6 +16,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
     VkDebugUtilsMessageTypeFlagsEXT             messageType,
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void*                                       pUserData) {
+  UnUsedVariable(messageSeverity);
+  UnUsedVariable(messageType);
+  UnUsedVariable(pUserData);
   std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
   return VK_FALSE;
@@ -70,35 +74,31 @@ bool ValidationLayer::CheckValidationLayersSupport() {
 }
 
 void ValidationLayer::Check() {
-  ASSERT_EXECPTION(kEnableValidationLayers && !CheckValidationLayersSupport())
+  ASSERT_EXECPTION(!CheckValidationLayersSupport())
       .SetErrorMessage("CheckValidationLayersSupport error")
       .Throw();
 }
 
 ValidationLayer::~ValidationLayer() {
-  if (kEnableValidationLayers) {
-    detail::DestroyDebugUtilsMessengerEXT(instance_, debug_messenger_, nullptr);
-  }
+  detail::DestroyDebugUtilsMessengerEXT(instance_, debug_messenger_, nullptr);
 }
 
 void ValidationLayer::Init() {
-  if (kEnableValidationLayers) {
-    VkDebugUtilsMessengerCreateInfoEXT createInfo{};
-    createInfo.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    createInfo.pfnUserCallback = detail::DebugCallback;
-    createInfo.pUserData       = nullptr;  // Optional
-    ASSERT_EXECPTION(
-        detail::CreateDebugUtilsMessengerEXT(instance_, &createInfo, nullptr, &debug_messenger_) !=
-        VK_SUCCESS)
-        .SetErrorMessage("CheckValidationLayersSupport error")
-        .Throw();
-  }
+  VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+  createInfo.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+  createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+  createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+  createInfo.pfnUserCallback = detail::DebugCallback;
+  createInfo.pUserData       = nullptr;  // Optional
+  ASSERT_EXECPTION(
+      detail::CreateDebugUtilsMessengerEXT(instance_, &createInfo, nullptr, &debug_messenger_) !=
+      VK_SUCCESS)
+      .SetErrorMessage("CheckValidationLayersSupport error")
+      .Throw();
 }
 
 }  // namespace vkengine

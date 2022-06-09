@@ -6,11 +6,6 @@
 namespace vkengine {
 
 static const std::vector<const char*> kValidationLayers = {"VK_LAYER_KHRONOS_validation"};
-#ifdef NDEBUG
-static const bool kEnableValidationLayers = false;
-#else
-static const bool kEnableValidationLayers = true;
-#endif
 
 class ValidationLayer {
  public:

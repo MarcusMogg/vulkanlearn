@@ -1,5 +1,7 @@
 #pragma once
 
+class GLFWwindow;
+
 namespace vkengine {
 struct WindowCreateInfo {
   int         width{1280};
@@ -10,8 +12,10 @@ struct WindowCreateInfo {
 
 class WindowSystem {
  public:
-  WindowSystem(const WindowCreateInfo& info) {}
-  ~WindowSystem() {}
+  WindowSystem(const WindowCreateInfo& info);
+  ~WindowSystem();
+
+  GLFWwindow* GetWindow() const;
 };
 
 }  // namespace vkengine
