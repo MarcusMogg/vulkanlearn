@@ -15,7 +15,10 @@ class WindowSystem {
   WindowSystem(const WindowCreateInfo& info);
   ~WindowSystem();
 
-  GLFWwindow* GetWindow() const;
+  GLFWwindow* GetWindow() const { return window_; }
+
+ private:
+  GLFWwindow* window_;
 };
 
 }  // namespace vkengine

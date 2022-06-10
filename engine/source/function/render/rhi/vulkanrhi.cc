@@ -111,7 +111,7 @@ void VulkanRhi::CreateLogicalDevice() {
   queue_family_ = QueueFamilyIndices::FindQueueFamilies(physical_device_, surface_);
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
   std::set<uint32_t>                   uniqueQueueFamilies = {
-      queue_family_.graphics_family.value(), queue_family_.present_family.value()};
+                        queue_family_.graphics_family.value(), queue_family_.present_family.value()};
 
   float queuePriority = 1.0f;
   for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -367,8 +367,6 @@ void VulkanRhi::CleanUp() {
   layer_.reset();
   vkDestroySurfaceKHR(instance_, surface_, nullptr);
   vkDestroyInstance(instance_, nullptr);  // all child must destroy before instance
-  glfwDestroyWindow(window_);
-  glfwTerminate();
 }
 
 VkCommandBuffer VulkanRhi::BeginSingleTimeCommands() {
