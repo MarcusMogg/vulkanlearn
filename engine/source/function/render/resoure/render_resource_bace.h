@@ -1,24 +1,27 @@
 #pragma once
 
+#include <memory>
+
+#include "forward.h"
+
 namespace vkengine {
 class RenderResourceBase {
  public:
   virtual ~RenderResourceBase() {}
 
-  virtual void uploadGlobalRenderResource(
-      std::shared_ptr<RHI> rhi, LevelResourceDesc level_resource_desc) = 0;
+  virtual void uploadGameObjectRenderResource(
+      std::shared_ptr<VulkanRhi> rhi,
+      RenderEntity               render_entity,
+      RenderMeshData             mesh_data,
+      RenderMaterialData         material_data) = 0;
 
   virtual void uploadGameObjectRenderResource(
-      std::shared_ptr<RHI> rhi,
-      RenderEntity         render_entity,
-      RenderMeshData       mesh_data,
-      RenderMaterialData   material_data) = 0;
+      std::shared_ptr<VulkanRhi> rhi, RenderEntity render_entity, RenderMeshData mesh_data) = 0;
 
   virtual void uploadGameObjectRenderResource(
-      std::shared_ptr<RHI> rhi, RenderEntity render_entity, RenderMeshData mesh_data) = 0;
-
-  virtual void uploadGameObjectRenderResource(
-      std::shared_ptr<RHI> rhi, RenderEntity render_entity, RenderMaterialData material_data) = 0;
+      std::shared_ptr<VulkanRhi> rhi,
+      RenderEntity               render_entity,
+      RenderMaterialData         material_data) = 0;
 
   virtual void updatePerFrameBuffer(
       std::shared_ptr<RenderScene> render_scene, std::shared_ptr<RenderCamera> camera) = 0;

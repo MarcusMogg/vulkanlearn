@@ -4,9 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "forward.h"
 #include "vulkan/vulkan.h"
-
-class GLFWwindow;
 
 namespace vkengine {
 struct QueueFamilyIndices {

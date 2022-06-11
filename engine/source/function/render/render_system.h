@@ -2,11 +2,9 @@
 
 #include <memory>
 
-#include "rhi/vulkanrhi.h"
+#include "forward.h"
 
 namespace vkengine {
-
-class WindowSystem;
 
 struct RenderInitInfo {
   std::shared_ptr<WindowSystem> window_system;

@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "forward.h"
 #include "vulkan/vulkan.h"
 namespace vkengine {
 

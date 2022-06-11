@@ -6,17 +6,15 @@
 #include <string>
 #include <vector>
 
+#include "forward.h"
 #include "function/render/rhi/validationlayer.h"
 #include "function/render/rhi/vulkanutils.h"
 #include "vulkan/vulkan.h"
-
-class GLFWwindow;
 
 namespace vkengine {
 
 static const std::vector<const char*> kDeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-class WindowSystem;
 struct RHIInitInfo {
   std::shared_ptr<WindowSystem> window_system;
 };
@@ -24,7 +22,7 @@ struct RHIInitInfo {
 class VulkanRhi {
  public:
   VulkanRhi() {}
-  ~VulkanRhi();
+  ~VulkanRhi() { CleanUp(); }
 
   // void FramebufferResizeCallback(int width, int height) { frame_size_change_ = true; }
 

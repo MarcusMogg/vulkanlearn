@@ -20,6 +20,9 @@ void GlobalContext::StartSystem() {
   render->Init(renderinfo);
 }
 
-void GlobalContext::ShutdownSystem() { RemoveObject<LogSystem>(kLogSystem); }
+void GlobalContext::ShutdownSystem() {
+  // if need delte in order or explicit destruct
+  // RemoveObject<LogSystem>(kLogSystem);
+}
 
 }  // namespace vkengine

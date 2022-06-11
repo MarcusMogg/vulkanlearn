@@ -1,6 +1,6 @@
 #pragma once
 
-class GLFWwindow;
+#include "forward.h"
 
 namespace vkengine {
 struct WindowCreateInfo {
