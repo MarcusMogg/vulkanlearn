@@ -55,6 +55,7 @@ class VulkanRhi {
   void CreateSwapChain();
   void CreateDepthResources();
 
+ public:
   GLFWwindow*      window_;
   VkInstance       instance_;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;

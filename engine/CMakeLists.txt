@@ -32,4 +32,5 @@ target_link_libraries(vkengine
 		fmt::fmt
 		tinyobjloader::tinyobjloader
 		spdlog::spdlog spdlog::spdlog_header_only
+		glm::glm
 )
