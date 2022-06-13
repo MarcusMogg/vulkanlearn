@@ -37,34 +37,40 @@ class RenderResource : public RenderResourceBase {
       const RenderMaterialData&  material_data);
 
   void UpdateMeshData(
-      std::shared_ptr<VulkanRhi>                    rhi,
-      bool                                          enable_vertex_blending,
-      uint32_t                                      index_buffer_size,
-      void*                                         index_buffer_data,
-      uint32_t                                      vertex_buffer_size,
-      struct MeshVertexDataDefinition const*        vertex_buffer_data,
-      uint32_t                                      joint_binding_buffer_size,
-      struct MeshVertexBindingDataDefinition const* joint_binding_buffer_data,
-      VulkanMesh&                                   now_mesh);
+      std::shared_ptr<VulkanRhi>             rhi,
+      bool                                   enable_vertex_blending,
+      uint32_t                               index_buffer_size,
+      const uint32_t*                        index_buffer_data,
+      uint32_t                               vertex_buffer_size,
+      MeshVertexDataDefinition const*        vertex_buffer_data,
+      uint32_t                               joint_binding_buffer_size,
+      MeshVertexBindingDataDefinition const* joint_binding_buffer_data,
+      VulkanMesh&                            now_mesh);
   void UpdateVertexBuffer(
-      std::shared_ptr<VulkanRhi>                    rhi,
-      bool                                          enable_vertex_blending,
-      uint32_t                                      vertex_buffer_size,
-      struct MeshVertexDataDefinition const*        vertex_buffer_data,
-      uint32_t                                      joint_binding_buffer_size,
-      struct MeshVertexBindingDataDefinition const* joint_binding_buffer_data,
-      uint32_t                                      index_buffer_size,
-      uint16_t*                                     index_buffer_data,
-      VulkanMesh&                                   now_mesh);
+      std::shared_ptr<VulkanRhi>             rhi,
+      bool                                   enable_vertex_blending,
+      uint32_t                               vertex_buffer_size,
+      MeshVertexDataDefinition const*        vertex_buffer_data,
+      uint32_t                               joint_binding_buffer_size,
+      MeshVertexBindingDataDefinition const* joint_binding_buffer_data,
+      uint32_t                               index_buffer_size,
+      const uint32_t*                        index_buffer_data,
+      VulkanMesh&                            now_mesh);
   void UpdateIndexBuffer(
       std::shared_ptr<VulkanRhi> rhi,
       uint32_t                   index_buffer_size,
-      void*                      index_buffer_data,
+      const uint32_t*            index_buffer_data,
       VulkanMesh&                now_mesh);
   void UpdateTextureImageData(
       std::shared_ptr<VulkanRhi> rhi,
-      const VulkanPBRMaterial&   materail,
+      VulkanPBRMaterial&         materail,
       const RenderMaterialData&  texture_data);
+
+  std::map<size_t, VulkanMesh>        vulkan_meshes_;
+  std::map<size_t, VulkanPBRMaterial> vulkan_pbr_materials_;
+
+  VkDescriptorSetLayout mesh_descriptor_set_layout{nullptr};
+  VkDescriptorSetLayout material_descriptor_set_layout{nullptr};
 };
 
 }  // namespace vkengine

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "forward.h"
+#include "function/render/resource/render_type.h"
 #include "function/render/rhi/validationlayer.h"
 #include "function/render/rhi/vulkanutils.h"
 #include "vulkan/vulkan.h"
@@ -42,6 +43,32 @@ class VulkanRhi {
   bool PrepareBeforePass(std::function<void()> passUpdateAfterRecreateSwapchain);
   void SubmitRendering(std::function<void()> passUpdateAfterRecreateSwapchain);
 
+  VkSampler GetOrCreateMipmapSampler(uint32_t width, uint32_t height);
+
+  void CreateGlobalImage(
+      VkImage&        image,
+      VkImageView&    image_view,
+      VkDeviceMemory& image_memory,
+      uint32_t        texture_image_width,
+      uint32_t        texture_image_height,
+      void*           texture_image_pixels,
+      PixelFormat     texture_image_format,
+      uint32_t        miplevels = 0);
+
+  void CreateBuffer(
+      VkDeviceSize          size,
+      VkBufferUsageFlags    usage,
+      VkMemoryPropertyFlags properties,
+      VkBuffer&             buffer,
+      VkDeviceMemory&       bufferMemory);
+  void CopyBuffer(
+      VkBuffer     src,
+      VkBuffer     dst,
+      VkDeviceSize size,
+      VkDeviceSize srcOffset = 0,
+      VkDeviceSize dstOffset = 0);
+  void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+
  private:
   void CreateInstance();
   void CreateDebugLayer();
@@ -54,6 +81,29 @@ class VulkanRhi {
   void CreateSyncObjects();
   void CreateSwapChain();
   void CreateDepthResources();
+
+  void CreateImage(
+      uint32_t              width,
+      uint32_t              height,
+      uint32_t              mipleavel,
+      VkFormat              format,
+      VkImageTiling         tiling,
+      VkImageUsageFlags     usage,
+      VkMemoryPropertyFlags properties,
+      VkImage&              image,
+      VkDeviceMemory&       imageMemory);
+  VkImageView CreateImageView(
+      VkImage            image,
+      VkFormat           format,
+      VkImageAspectFlags aspect_flags,
+      const uint32_t     mipleavel = 1);
+  void GenerateMipmaps(VkImage image, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
+  void TransitionImageLayout(
+      VkImage       image,
+      VkFormat      format,
+      VkImageLayout old_layout,
+      VkImageLayout new_layout,
+      uint32_t      mipleavel);
 
  public:
   GLFWwindow*      window_;
@@ -103,6 +153,10 @@ class VulkanRhi {
   SwapChainSupportDetails          swap_chain_support_;
 
   static constexpr int kMaxFramesInFight = 2;
+
+  std::unordered_map<uint32_t, VkSampler> mipmap_sampler_map;
+  VkSampler                               nearest_sampler;
+  VkSampler                               linear_sampler;
 
 #ifdef NDEBUG
   static constexpr bool kEnableDebug = false;

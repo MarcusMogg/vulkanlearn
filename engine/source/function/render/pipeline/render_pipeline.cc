@@ -4,23 +4,23 @@
 
 namespace vkengine {
 
-void RenderPipeline::Init(const RenderPipelineInitInfo& init_info) override {
+void RenderPipeline::Init(const RenderPipelineInitInfo& init_info) {
   render_resource = init_info.render_resource;
   render_rhi      = init_info.render_rhi;
 }
 
-void RenderPipeline::PreparePassData() override {}
-void RenderPipeline::ForwardRender() override {
+void RenderPipeline::PreparePassData() {}
+void RenderPipeline::ForwardRender() {
   bool recreate_swapchain =
-      render_rhi->PrepareBeforePass([this]() { PassUpdateAfterRecreateSwapchain() });
+      render_rhi->PrepareBeforePass([this]() { PassUpdateAfterRecreateSwapchain(); });
   if (recreate_swapchain) {
     return;
   }
 
-  render_rhi->SubmitRendering([this]() { PassUpdateAfterRecreateSwapchain() });
+  render_rhi->SubmitRendering([this]() { PassUpdateAfterRecreateSwapchain(); });
 }
-void RenderPipeline::DeferredRender() override {}
+void RenderPipeline::DeferredRender() {}
 
-void RenderPipeline::PassUpdateAfterRecreateSwapchain {}
+void RenderPipeline::PassUpdateAfterRecreateSwapchain() {}
 
 }  // namespace vkengine
