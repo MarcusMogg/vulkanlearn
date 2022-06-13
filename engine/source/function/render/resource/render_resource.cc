@@ -330,7 +330,7 @@ void RenderResource::UpdateVertexBuffer(
     VkDescriptorSetAllocateInfo mesh_vertex_blending_per_mesh_descriptor_set_alloc_info;
     mesh_vertex_blending_per_mesh_descriptor_set_alloc_info.sType =
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    mesh_vertex_blending_per_mesh_descriptor_set_alloc_info.pNext          = NULL;
+    mesh_vertex_blending_per_mesh_descriptor_set_alloc_info.pNext          = nullptr;
     mesh_vertex_blending_per_mesh_descriptor_set_alloc_info.descriptorPool = rhi->descriptor_pool_;
     mesh_vertex_blending_per_mesh_descriptor_set_alloc_info.descriptorSetCount = 1;
     mesh_vertex_blending_per_mesh_descriptor_set_alloc_info.pSetLayouts =
@@ -357,7 +357,7 @@ void RenderResource::UpdateVertexBuffer(
         descriptor_writes[0];
     mesh_vertex_blending_vertex_Joint_binding_storage_buffer_write_info.sType =
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    mesh_vertex_blending_vertex_Joint_binding_storage_buffer_write_info.pNext = NULL;
+    mesh_vertex_blending_vertex_Joint_binding_storage_buffer_write_info.pNext = nullptr;
     mesh_vertex_blending_vertex_Joint_binding_storage_buffer_write_info.dstSet =
         descriptor_set_to_write;
     mesh_vertex_blending_vertex_Joint_binding_storage_buffer_write_info.dstBinding      = 0;
@@ -373,7 +373,7 @@ void RenderResource::UpdateVertexBuffer(
         (sizeof(descriptor_writes) / sizeof(descriptor_writes[0])),
         descriptor_writes,
         0,
-        NULL);
+        nullptr);
   } else {
     assert(0 == (vertex_buffer_size % sizeof(MeshVertexDataDefinition)));
     uint32_t vertex_count = vertex_buffer_size / sizeof(MeshVertexDataDefinition);
@@ -495,7 +495,7 @@ void RenderResource::UpdateVertexBuffer(
     VkDescriptorSetAllocateInfo mesh_vertex_blending_per_mesh_descriptor_set_alloc_info;
     mesh_vertex_blending_per_mesh_descriptor_set_alloc_info.sType =
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    mesh_vertex_blending_per_mesh_descriptor_set_alloc_info.pNext          = NULL;
+    mesh_vertex_blending_per_mesh_descriptor_set_alloc_info.pNext          = nullptr;
     mesh_vertex_blending_per_mesh_descriptor_set_alloc_info.descriptorPool = rhi->descriptor_pool_;
     mesh_vertex_blending_per_mesh_descriptor_set_alloc_info.descriptorSetCount = 1;
     mesh_vertex_blending_per_mesh_descriptor_set_alloc_info.pSetLayouts =
@@ -522,7 +522,7 @@ void RenderResource::UpdateVertexBuffer(
         descriptor_writes[0];
     mesh_vertex_blending_vertex_Joint_binding_storage_buffer_write_info.sType =
         VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    mesh_vertex_blending_vertex_Joint_binding_storage_buffer_write_info.pNext = NULL;
+    mesh_vertex_blending_vertex_Joint_binding_storage_buffer_write_info.pNext = nullptr;
     mesh_vertex_blending_vertex_Joint_binding_storage_buffer_write_info.dstSet =
         descriptor_set_to_write;
     mesh_vertex_blending_vertex_Joint_binding_storage_buffer_write_info.dstBinding      = 0;
@@ -538,7 +538,7 @@ void RenderResource::UpdateVertexBuffer(
         (sizeof(descriptor_writes) / sizeof(descriptor_writes[0])),
         descriptor_writes,
         0,
-        NULL);
+        nullptr);
   }
   // staging buffer for cpu load data
   VkBuffer       stagingBuffer;
@@ -728,7 +728,7 @@ void RenderResource::UpdateTextureImageData(
 
     std::array<VkWriteDescriptorSet, 6> descriptorWrites{};
     descriptorWrites[0].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrites[0].pNext           = NULL;
+    descriptorWrites[0].pNext           = nullptr;
     descriptorWrites[0].dstSet          = now_material.material_descriptor_set;
     descriptorWrites[0].dstBinding      = 0;
     descriptorWrites[0].dstArrayElement = 0;
@@ -737,7 +737,7 @@ void RenderResource::UpdateTextureImageData(
     descriptorWrites[0].pBufferInfo     = &bufferInfo;
 
     descriptorWrites[1].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrites[1].pNext           = NULL;
+    descriptorWrites[1].pNext           = nullptr;
     descriptorWrites[1].dstSet          = now_material.material_descriptor_set;
     descriptorWrites[1].dstBinding      = 1;
     descriptorWrites[1].dstArrayElement = 0;
