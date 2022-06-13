@@ -2,6 +2,7 @@
 
 #include "function/render/resource/render_resource_base.h"
 #include "function/render/resource/render_type_for_vulkan.h"
+#include "function/render/resource/vulkan_buffer_object.h"
 
 namespace vkengine {
 class RenderResource : public RenderResourceBase {
@@ -27,6 +28,11 @@ class RenderResource : public RenderResourceBase {
 
   virtual void UpdatePerFrameBuffer(
       std::shared_ptr<RenderScene> render_scene, std::shared_ptr<Camera> camera) override;
+
+  VkDescriptorSetLayout mesh_descriptor_set_layout{nullptr};
+  VkDescriptorSetLayout material_descriptor_set_layout{nullptr};
+
+  MeshPerframeStorageBufferObject mesh_perframe_storage_buffer_object;
 
  private:
   VulkanMesh& GetOrCreateVulkanMesh(
@@ -68,9 +74,6 @@ class RenderResource : public RenderResourceBase {
 
   std::map<size_t, VulkanMesh>        vulkan_meshes_;
   std::map<size_t, VulkanPBRMaterial> vulkan_pbr_materials_;
-
-  VkDescriptorSetLayout mesh_descriptor_set_layout{nullptr};
-  VkDescriptorSetLayout material_descriptor_set_layout{nullptr};
 };
 
 }  // namespace vkengine

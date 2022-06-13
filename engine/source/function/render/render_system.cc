@@ -26,7 +26,30 @@ void RenderSystem::Init(const RenderInitInfo& info) {
   // scene_->ambient_light = {}
 
   pipeline_ = std::make_shared<RenderPipeline>();
+
+  ProcessSwapData();
 }
 
-void RenderSystem::Tick() {}
+void RenderSystem::Tick() {
+  resource_->UpdatePerFrameBuffer(scene_, camera_);
+  pipeline_->ForwardRender();
+}
+
+void RenderSystem::ProcessSwapData() {
+  RenderEntity render_entity;
+  render_entity.mesh_asset_id = 1;
+
+  MeshSourceDesc mesh_source;
+  mesh_source.mesh_file = "./asset/viking_room.obj";
+  RenderResource::BoudingBox box;
+  RenderMeshData             mesh_data = resource_->LoadMeshData(mesh_source, box);
+  resource_->UploadGameObjectRenderResource(rhi_, render_entity, mesh_data);
+
+  MaterialSourceDesc material_source;
+  material_source.base_color_file  = "./asset/viking_room.png";
+  RenderMaterialData material_data = resource_->LoadMaterialData(material_source);
+  resource_->UploadGameObjectRenderResource(rhi_, render_entity, material_data);
+
+  scene_->render_entities.push_back(render_entity);
+}
 }  // namespace vkengine

@@ -25,6 +25,8 @@ class RenderSystem {
   std::shared_ptr<RenderResourceBase> resource_;
   std::shared_ptr<RenderScene>        scene_;
   std::shared_ptr<RenderPipelineBase> pipeline_;
+
+  void ProcessSwapData();
 };
 
 }  // namespace vkengine

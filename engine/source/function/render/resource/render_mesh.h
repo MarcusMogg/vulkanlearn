@@ -33,7 +33,7 @@ struct MeshVertex {
     glm::vec4  weights;
   };
 
-  static std::array<VkVertexInputBindingDescription, 3> getBindingDescriptions() {
+  static std::array<VkVertexInputBindingDescription, 3> GetBindingDescriptions() {
     std::array<VkVertexInputBindingDescription, 3> binding_descriptions{};
 
     // position
@@ -51,7 +51,7 @@ struct MeshVertex {
     return binding_descriptions;
   }
 
-  static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
+  static std::array<VkVertexInputAttributeDescription, 4> GetAttributeDescriptions() {
     std::array<VkVertexInputAttributeDescription, 4> attribute_descriptions{};
 
     // position

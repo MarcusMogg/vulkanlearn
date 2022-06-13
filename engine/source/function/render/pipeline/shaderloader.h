@@ -6,7 +6,7 @@
 
 #include "vulkan/vulkan.h "
 
-namespace vklearn {
+namespace vkengine {
 
 class Shader {
  public:
@@ -16,11 +16,11 @@ class Shader {
   static std::vector<char> ReadFile(const std::string& filename);
 
   VkShaderModule GetShader() const { return shader_; }
-  void Load(const std::string& filename);
+  void           Load(const std::string& filename);
 
  private:
-  VkShaderModule shader_ = VK_NULL_HANDLE;
-  VkDevice logic_device_ = VK_NULL_HANDLE;
+  VkShaderModule shader_       = VK_NULL_HANDLE;
+  VkDevice       logic_device_ = VK_NULL_HANDLE;
 };
 
-}  // namespace vklearn
+}  // namespace vkengine

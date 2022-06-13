@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "forward.h"
-
 namespace vkengine {
 
 struct RenderPipelineInitInfo {

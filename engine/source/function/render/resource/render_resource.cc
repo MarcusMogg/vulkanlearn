@@ -4,6 +4,7 @@
 
 #include "core/exception/assert_exception.h"
 #include "core/utils/ccn_utils.h"
+#include "function/render/camera/camera_base.h"
 #include "function/render/resource/render_mesh.h"
 #include "function/render/resource/vulkan_buffer_object.h"
 #include "function/render/rhi/vulkanrhi.h"
@@ -34,7 +35,13 @@ void RenderResource::UploadGameObjectRenderResource(
 }
 
 void RenderResource::UpdatePerFrameBuffer(
-    std::shared_ptr<RenderScene> render_scene, std::shared_ptr<Camera> camera) {}
+    std::shared_ptr<RenderScene> render_scene, std::shared_ptr<Camera> camera) {
+  glm::mat4 view_matrix = camera->GetViewMatrix();
+  glm::mat4 proj_matrix = camera->GetPersProjMatrix();
+
+  mesh_perframe_storage_buffer_object.proj_view_matrix = proj_matrix * view_matrix;
+  mesh_perframe_storage_buffer_object.camera_position  = camera->position();
+}
 
 VulkanMesh& RenderResource::GetOrCreateVulkanMesh(
     std::shared_ptr<VulkanRhi> rhi, const RenderEntity& entity, const RenderMeshData& mesh_data) {
