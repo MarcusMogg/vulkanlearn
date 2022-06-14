@@ -2,9 +2,8 @@
 
 #include "function/render/camera/camera_base.h"
 #include "function/render/pipeline/render_pipeline.h"
-#include "function/render/resource/render_resource.h"
-#include "function/render/resource/render_scene.h"
 #include "function/render/rhi/vulkanrhi.h"
+#include "function/render/scene/render_scene.h"
 
 namespace vkengine {
 void RenderSystem::Init(const RenderInitInfo& info) {
@@ -13,7 +12,7 @@ void RenderSystem::Init(const RenderInitInfo& info) {
   rhiinfo.window_system = info.window_system;
   rhi_->Init(rhiinfo);
 
-  resource_ = std::make_shared<RenderResource>();
+  // resource_ = std::make_shared<RenderResource>();
   // TODO: Set global resource
 
   camera_ = std::make_shared<Camera>();

@@ -7,9 +7,9 @@
 #include <vector>
 
 #include "forward.h"
-#include "function/render/resource/render_type.h"
 #include "function/render/rhi/validationlayer.h"
 #include "function/render/rhi/vulkanutils.h"
+#include "function/render/scene/render_type.h"
 #include "vulkan/vulkan.h"
 
 namespace vkengine {
