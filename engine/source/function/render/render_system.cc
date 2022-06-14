@@ -2,9 +2,8 @@
 
 #include "function/render/camera/camera_base.h"
 #include "function/render/pipeline/render_pipeline.h"
-#include "function/render/resource/render_resource.h"
-#include "function/render/resource/render_scene.h"
 #include "function/render/rhi/vulkanrhi.h"
+#include "function/render/scene/render_scene.h"
 
 namespace vkengine {
 void RenderSystem::Init(const RenderInitInfo& info) {
@@ -13,7 +12,7 @@ void RenderSystem::Init(const RenderInitInfo& info) {
   rhiinfo.window_system = info.window_system;
   rhi_->Init(rhiinfo);
 
-  resource_ = std::make_shared<RenderResource>();
+  // resource_ = std::make_shared<RenderResource>();
   // TODO: Set global resource
 
   camera_ = std::make_shared<Camera>();
@@ -31,7 +30,7 @@ void RenderSystem::Init(const RenderInitInfo& info) {
 }
 
 void RenderSystem::Tick() {
-  resource_->UpdatePerFrameBuffer(scene_, camera_);
+  // resource_->UpdatePerFrameBuffer(scene_, camera_);
   pipeline_->ForwardRender();
 }
 
@@ -39,16 +38,16 @@ void RenderSystem::ProcessSwapData() {
   RenderEntity render_entity;
   render_entity.mesh_asset_id = 1;
 
-  MeshSourceDesc mesh_source;
-  mesh_source.mesh_file = "./asset/viking_room.obj";
-  RenderResource::BoudingBox box;
-  RenderMeshData             mesh_data = resource_->LoadMeshData(mesh_source, box);
-  resource_->UploadGameObjectRenderResource(rhi_, render_entity, mesh_data);
+  // MeshSourceDesc mesh_source;
+  // mesh_source.mesh_file = "./asset/viking_room.obj";
+  // RenderResource::BoudingBox box;
+  // RenderMeshData             mesh_data = resource_->LoadMeshData(mesh_source, box);
+  // resource_->UploadGameObjectRenderResource(rhi_, render_entity, mesh_data);
 
-  MaterialSourceDesc material_source;
-  material_source.base_color_file  = "./asset/viking_room.png";
-  RenderMaterialData material_data = resource_->LoadMaterialData(material_source);
-  resource_->UploadGameObjectRenderResource(rhi_, render_entity, material_data);
+  // MaterialSourceDesc material_source;
+  // material_source.base_color_file  = "./asset/viking_room.png";
+  // RenderMaterialData material_data = resource_->LoadMaterialData(material_source);
+  // resource_->UploadGameObjectRenderResource(rhi_, render_entity, material_data);
 
   scene_->render_entities.push_back(render_entity);
 }

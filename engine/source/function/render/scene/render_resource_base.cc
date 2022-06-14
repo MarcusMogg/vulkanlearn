@@ -1,25 +1,26 @@
 
-#include "function/render/resource/render_resource_base.h"
+#include "function/render/scene/render_resource_base.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include "core/exception/assert_exception.h"
 #include "macro.h"
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
 namespace vkengine {
 
 RenderResourceBase::BoudingBox& RenderResourceBase::GetCachedBoudingBox(
-    const MeshSourceDesc& source) {
+    const RenderMeshSource& source) {
   bounding_box_cache_map.try_emplace(source, BoudingBox{});
   return bounding_box_cache_map[source];
 }
 
-StaticMeshData RenderResourceBase::LoadStaticMesh(
+RenderMeshData RenderResourceBase::LoadStaticMesh(
     const std::string& mesh_file, BoudingBox& bounding_box) {
-  StaticMeshData mesh_data;
+  RenderMeshData mesh_data;
 
   tinyobj::ObjReader       reader;
   tinyobj::ObjReaderConfig reader_config;
@@ -35,8 +36,7 @@ StaticMeshData RenderResourceBase::LoadStaticMesh(
   auto& attrib = reader.GetAttrib();
   auto& shapes = reader.GetShapes();
 
-  std::unordered_map<MeshVertexDataDefinition, uint32_t, MeshVertexDataDefinition::HasHValue>
-      mesh_vertices;
+  std::unordered_map<VulkanVertexData, uint32_t, VulkanVertexData::HasHValue> mesh_vertices;
   for (const auto& shape : shapes) {
     size_t index_offset = 0;
     for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
@@ -135,11 +135,11 @@ StaticMeshData RenderResourceBase::LoadStaticMesh(
       }
 
       for (size_t i = 0; i < 3; i++) {
-        MeshVertexDataDefinition mesh_vert{};
+        VulkanVertexData mesh_vert{};
 
         mesh_vert.position = vertex[i];
         mesh_vert.normal   = normal[i];
-        mesh_vert.uv       = uv[i];
+        mesh_vert.texcoord = uv[i];
         mesh_vert.tangent  = tangent;
 
         const auto it = mesh_vertices.find(mesh_vert);
@@ -148,7 +148,6 @@ StaticMeshData RenderResourceBase::LoadStaticMesh(
           mesh_data.index_buffer.emplace_back(
               static_cast<uint32_t>(mesh_data.vertex_buffer.size()));
           mesh_data.vertex_buffer.emplace_back(mesh_vert);
-
         } else {
           mesh_data.index_buffer.emplace_back(it->second);
         }
@@ -159,9 +158,8 @@ StaticMeshData RenderResourceBase::LoadStaticMesh(
   return mesh_data;
 }
 
-RenderMeshData RenderResourceBase::LoadMeshData(
-    const MeshSourceDesc& source, BoudingBox& bounding_box) {
-  RenderMeshData ret;
+RenderMesh RenderResourceBase::LoadMesh(const RenderMeshSource& source, BoudingBox& bounding_box) {
+  RenderMesh ret;
 
   if (std::filesystem::path(source.mesh_file).extension() == ".obj") {
     ret.static_mesh_data = LoadStaticMesh(source.mesh_file, bounding_box);
@@ -169,17 +167,13 @@ RenderMeshData RenderResourceBase::LoadMeshData(
   GetCachedBoudingBox(source) = bounding_box;
   return ret;
 }
-RenderMaterialData RenderResourceBase::LoadMaterialData(const MaterialSourceDesc& source) {
-  RenderMaterialData ret;
-  ret.base_color_texture         = LoadTexture(source.base_color_file, true);
-  ret.metallic_roughness_texture = LoadTexture(source.metallic_roughness_file);
-  ret.normal_texture             = LoadTexture(source.normal_file);
-  ret.occlusion_texture          = LoadTexture(source.occlusion_file);
-  ret.emissive_texture           = LoadTexture(source.emissive_file);
+RenderMaterial RenderResourceBase::LoadMaterial(const RenderMaterialSource& source) {
+  RenderMaterial ret;
+  ret.base_color_texture = LoadTexture(source.base_color_file, true);
   return ret;
 }
 
-std::shared_ptr<TextureData> RenderResourceBase::LoadTextureHDR(
+std::shared_ptr<RenderMaterialData> RenderResourceBase::LoadTextureHDR(
     const std::string& file, int desired_channels) {
   int    iw, ih, n;
   float* buffer = stbi_loadf(file.c_str(), &iw, &ih, &n, desired_channels);
@@ -188,7 +182,7 @@ std::shared_ptr<TextureData> RenderResourceBase::LoadTextureHDR(
     return nullptr;
   }
 
-  std::shared_ptr<TextureData> texture = std::make_shared<TextureData>();
+  std::shared_ptr<RenderMaterialData> texture = std::make_shared<RenderMaterialData>();
 
   texture->pixels       = buffer;
   texture->width        = iw;
@@ -211,7 +205,7 @@ std::shared_ptr<TextureData> RenderResourceBase::LoadTextureHDR(
   }
   return texture;
 }
-std::shared_ptr<TextureData> RenderResourceBase::LoadTexture(
+std::shared_ptr<RenderMaterialData> RenderResourceBase::LoadTexture(
     const std::string& file, bool is_srgb) {
   int            iw, ih, n;
   unsigned char* buffer = stbi_load(file.c_str(), &iw, &ih, &n, 4);
@@ -220,7 +214,7 @@ std::shared_ptr<TextureData> RenderResourceBase::LoadTexture(
     return nullptr;
   }
 
-  std::shared_ptr<TextureData> texture = std::make_shared<TextureData>();
+  std::shared_ptr<RenderMaterialData> texture = std::make_shared<RenderMaterialData>();
 
   texture->pixels       = buffer;
   texture->width        = iw;
