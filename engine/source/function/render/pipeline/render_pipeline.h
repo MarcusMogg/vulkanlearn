@@ -1,6 +1,5 @@
 #pragma once
 
-#include "function/render/pipeline/render_pass_base.h"
 #include "function/render/pipeline/render_pipeline_base.h"
 
 namespace vkengine {
@@ -20,5 +19,6 @@ class RenderPipeline : public RenderPipelineBase {
   void PassUpdateAfterRecreateSwapchain();
 
  private:
+  void SetupDescriptorSetLayout();
 };
 }  // namespace vkengine

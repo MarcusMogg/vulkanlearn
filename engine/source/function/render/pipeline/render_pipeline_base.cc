@@ -1,4 +1,3 @@
-
 #include "function/render/pipeline/render_pipeline_base.h"
 
 #include <array>
@@ -10,16 +9,16 @@
 namespace vkengine {
 
 void RenderPipelineBase::CreateRenderPass() {
-  std::vector<VkAttachmentDescription> colorAttachments{};
+  std::vector<VkAttachmentDescription> attachments{};
   std::vector<VkSubpassDescription>    subpass{};
   std::vector<VkSubpassDependency>     dependency{};
 
   uint32_t src = VK_SUBPASS_EXTERNAL;
   uint32_t dst = 0;
   for (auto& i : passes) {
-    i->CreateSubPass(src, dst, colorAttachments, subpass, dependency);
+    i->CreateSubPass(src, dst, attachments, subpass, dependency);
     if (src == VK_SUBPASS_EXTERNAL) {
-      src = 0
+      src = 0;
     } else {
       src++;
     }
@@ -36,7 +35,8 @@ void RenderPipelineBase::CreateRenderPass() {
   renderPassInfo.pDependencies   = dependency.data();
 
   ASSERT_EXECPTION(
-      vkCreateRenderPass(rhi->logic_device_, &renderPassInfo, nullptr, &framebuffer.render_pass) !=
+      vkCreateRenderPass(
+          render_rhi->logic_device_, &renderPassInfo, nullptr, &framebuffer.render_pass) !=
       VK_SUCCESS)
       .SetErrorMessage("failed to create render pass!")
       .Throw();

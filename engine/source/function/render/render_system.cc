@@ -48,12 +48,14 @@ void RenderSystem::ProcessSwapData() {
   mesh_source.mesh_file = "./asset/viking_room.obj";
   RenderResource::BoudingBox box;
   auto                       mesh_data = scene_->resource_->LoadMesh(mesh_source, box);
-  scene_->resource_->UploadGameObjectRenderResource(rhi_, render_entity, mesh_data);
+  scene_->resource_->UploadGameObjectRenderResource(
+      rhi_, render_entity, mesh_data, pipeline_->descriptor_per_mesh.descriptor_layout);
 
   RenderMaterialSource material_source;
   material_source.base_color_file = "./asset/viking_room.png";
   auto material_data              = scene_->resource_->LoadMaterial(material_source);
-  scene_->resource_->UploadGameObjectRenderResource(rhi_, render_entity, material_data);
+  scene_->resource_->UploadGameObjectRenderResource(
+      rhi_, render_entity, material_data, pipeline_->descriptor_per_material.descriptor_layout);
 
   scene_->render_entities.push_back(render_entity);
 }

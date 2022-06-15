@@ -3,16 +3,14 @@
 #include <memory>
 
 #include "forward.h"
+#include "function/render/pipeline/render_pass_base.h"
+#include "vulkan/vulkan.hpp"
+
 namespace vkengine {
 
 struct RenderPipelineInitInfo {
   std::shared_ptr<RenderResourceBase> render_resource;
   std::shared_ptr<VulkanRhi>          render_rhi;
-};
-
-struct VulkanDescriptor {
-  VkDescriptorSet       descriptor_set;
-  VkDescriptorSetLayout descriptor_layout;
 };
 
 struct FrameBufferAttachment {
@@ -39,10 +37,12 @@ class RenderPipelineBase {
   std::shared_ptr<RenderResourceBase> render_resource;
   std::shared_ptr<VulkanRhi>          render_rhi;
 
-  Framebuffer framebuffer;
-
-  std::vector<VulkanDescriptor>                descriptor_infos;
+  Framebuffer                                  framebuffer;
   std::vector<std::shared_ptr<RenderPassBase>> passes;
+
+ public:
+  VulkanDescriptor descriptor_per_mesh;
+  VulkanDescriptor descriptor_per_material;
 
  public:
   RenderPipelineBase() {}

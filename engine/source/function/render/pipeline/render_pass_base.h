@@ -13,7 +13,10 @@ struct VulkanGraphPipeline {
   VkPipelineLayout layout;
 };
 
-struct VulkanDescriptor;
+struct VulkanDescriptor {
+  VkDescriptorSet       descriptor_set;
+  VkDescriptorSetLayout descriptor_layout;
+};
 
 class RenderPassBase {
  private:
@@ -22,8 +25,8 @@ class RenderPassBase {
   RenderPassBase() {}
   virtual ~RenderPassBase() {}
 
-  virtual void Draw() = 0;
-  virtual void Init() = 0;
+  virtual void Draw()                                             = 0;
+  virtual void Init(std::shared_ptr<RenderPipelineBase> pipeline) = 0;
   virtual void CreateSubPass(
       const uint32_t                        src,
       const uint32_t                        dest,
