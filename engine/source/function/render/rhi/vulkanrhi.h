@@ -158,6 +158,9 @@ class VulkanRhi {
   VkSampler                               nearest_sampler;
   VkSampler                               linear_sampler;
 
+  VkViewport viewport{};
+  VkRect2D   scissor{};
+
 #ifdef NDEBUG
   static constexpr bool kEnableDebug = false;
 #else

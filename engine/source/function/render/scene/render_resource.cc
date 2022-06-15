@@ -163,7 +163,7 @@ void RenderResource::UpdateVertexBuffer(
       0,
       &inefficient_staging_buffer_data);
 
-  std::copy(vertex_buffer_data, vertex_buffer_data + vertex_count, inefficient_staging_buffer_data);
+  std::memcpy(inefficient_staging_buffer_data, vertex_buffer_data, vertex_buffer_size);
 
   vkUnmapMemory(rhi->logic_device_, inefficient_staging_buffer_memory);
 

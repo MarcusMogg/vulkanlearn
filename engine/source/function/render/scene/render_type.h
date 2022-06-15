@@ -43,8 +43,8 @@ struct VulkanVertexData {
     return bindingDescription;
   }
 
-  static std::array<VkVertexInputAttributeDescription, 4> GetAttributeDescriptions() {
-    std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions;
+  static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions() {
+    std::vector<VkVertexInputAttributeDescription> attributeDescriptions(4);
 
     attributeDescriptions[0].binding  = 0;
     attributeDescriptions[0].location = 0;
@@ -61,10 +61,10 @@ struct VulkanVertexData {
     attributeDescriptions[2].format   = VK_FORMAT_R32G32B32_SFLOAT;
     attributeDescriptions[2].offset   = offsetof(VulkanVertexData, tangent);
 
-    attributeDescriptions[2].binding  = 0;
-    attributeDescriptions[2].location = 2;
-    attributeDescriptions[2].format   = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[2].offset   = offsetof(VulkanVertexData, texcoord);
+    attributeDescriptions[3].binding  = 0;
+    attributeDescriptions[3].location = 3;
+    attributeDescriptions[3].format   = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[3].offset   = offsetof(VulkanVertexData, texcoord);
 
     return attributeDescriptions;
   }
@@ -107,6 +107,7 @@ struct VkPerframeStorageUbo {
   float     _padding_1;
 };
 
+// must pod
 struct VkAllStorageUbo {
   VkPerframeStorageUbo per_frame_ubo;
 };

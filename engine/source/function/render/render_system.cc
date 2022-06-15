@@ -3,6 +3,7 @@
 #include "function/render/camera/camera_base.h"
 #include "function/render/pipeline/render_pipeline.h"
 #include "function/render/rhi/vulkanrhi.h"
+#include "function/render/scene/render_resource.h"
 #include "function/render/scene/render_scene.h"
 
 namespace vkengine {
@@ -21,6 +22,10 @@ void RenderSystem::Init(const RenderInitInfo& info) {
   // camera_->SetFarNear();
 
   scene_ = std::make_shared<RenderScene>();
+  RenderSceneInitInfo sceneinfo;
+  sceneinfo.rhi    = rhi_;
+  sceneinfo.camera = camera_;
+  scene_->Init(sceneinfo);
   // TODO: set light
   // scene_->ambient_light = {}
 
@@ -30,24 +35,25 @@ void RenderSystem::Init(const RenderInitInfo& info) {
 }
 
 void RenderSystem::Tick() {
-  // resource_->UpdatePerFrameBuffer(scene_, camera_);
-  pipeline_->ForwardRender();
+  scene_->UpdatePerFrameBuffer();
+  pipeline_->Draw();
 }
 
 void RenderSystem::ProcessSwapData() {
+  // TODO: append logic move to scene
   RenderEntity render_entity;
   render_entity.mesh_asset_id = 1;
 
-  // MeshSourceDesc mesh_source;
-  // mesh_source.mesh_file = "./asset/viking_room.obj";
-  // RenderResource::BoudingBox box;
-  // RenderMeshData             mesh_data = resource_->LoadMeshData(mesh_source, box);
-  // resource_->UploadGameObjectRenderResource(rhi_, render_entity, mesh_data);
+  RenderMeshSource mesh_source;
+  mesh_source.mesh_file = "./asset/viking_room.obj";
+  RenderResource::BoudingBox box;
+  auto                       mesh_data = scene_->resource_->LoadMesh(mesh_source, box);
+  scene_->resource_->UploadGameObjectRenderResource(rhi_, render_entity, mesh_data);
 
-  // MaterialSourceDesc material_source;
-  // material_source.base_color_file  = "./asset/viking_room.png";
-  // RenderMaterialData material_data = resource_->LoadMaterialData(material_source);
-  // resource_->UploadGameObjectRenderResource(rhi_, render_entity, material_data);
+  RenderMaterialSource material_source;
+  material_source.base_color_file = "./asset/viking_room.png";
+  auto material_data              = scene_->resource_->LoadMaterial(material_source);
+  scene_->resource_->UploadGameObjectRenderResource(rhi_, render_entity, material_data);
 
   scene_->render_entities.push_back(render_entity);
 }

@@ -15,11 +15,10 @@ class RenderPipeline : public RenderPipelineBase {
   virtual void Init(const RenderPipelineInitInfo& init_info) override;
 
   virtual void PreparePassData() override;
-  virtual void ForwardRender() override;
-  virtual void DeferredRender() override;
+  virtual void Draw() override;
 
   void PassUpdateAfterRecreateSwapchain();
 
-  std::shared_ptr<RenderPassBase> pass_;
+ private:
 };
 }  // namespace vkengine

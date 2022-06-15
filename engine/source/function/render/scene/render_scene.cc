@@ -49,6 +49,32 @@ void RenderScene::CreateAndMapStorageBuffer() {
       &storage_buffer_object->ubo_map_ptr);
 }
 
-void RenderScene::UpdatePerFrameBuffer() {}
+void RenderScene::UpdatePerFrameBuffer() {
+  cur_frame_ = rhi_->current_frame_;
+  UpdateStorageBuffer();
+}
+
+void RenderScene::UpdateStorageBuffer() {
+  auto&     ubo         = storage_buffer_object->ubo[cur_frame_];
+  glm::mat4 view_matrix = camera_->GetViewMatrix();
+  glm::mat4 proj_matrix = camera_->GetPersProjMatrix();
+
+  ubo.per_frame_ubo.proj_view_matrix = proj_matrix * view_matrix;
+  ubo.per_frame_ubo.camera_position  = camera_->position();
+
+  std::memcpy(
+      reinterpret_cast<VkAllStorageUbo*>(storage_buffer_object->ubo_map_ptr) + cur_frame_,
+      storage_buffer_object->ubo.data() + cur_frame_,
+      sizeof(VkAllStorageUbo));
+}
+
+std::vector<uint32_t> RenderScene::GetStorageBufferOffset() {
+  uint32_t              base = static_cast<uint32_t>(sizeof(VkAllStorageUbo) * cur_frame_);
+  std::vector<uint32_t> res;
+
+  res.emplace_back(static_cast<uint32_t>(base + offsetof(VkAllStorageUbo, per_frame_ubo)));
+
+  return res;
+}
 
 }  // namespace vkengine

@@ -18,7 +18,8 @@ class RenderScene {
   // render entities
   std::vector<RenderEntity> render_entities;
 
-  std::shared_ptr<StorageBuffer> storage_buffer_object;
+  std::shared_ptr<StorageBuffer>      storage_buffer_object;
+  std::shared_ptr<RenderResourceBase> resource_;
 
  public:
   RenderScene() {}
@@ -26,15 +27,17 @@ class RenderScene {
 
   void Init(const RenderSceneInitInfo&);
 
-  void UpdatePerFrameBuffer();
+  void                  UpdatePerFrameBuffer();
+  std::vector<uint32_t> GetStorageBufferOffset();
 
  private:
-  std::shared_ptr<VulkanRhi>          rhi_;
-  std::shared_ptr<Camera>             camera_;
-  std::shared_ptr<RenderResourceBase> resource_;
+  std::shared_ptr<VulkanRhi> rhi_;
+  std::shared_ptr<Camera>    camera_;
+
+  uint32_t cur_frame_;
 
   void CreateAndMapStorageBuffer();
-  void UpdateStorageBuffer(uint32_t cur_frame);
+  void UpdateStorageBuffer();
 };
 
 }  // namespace vkengine

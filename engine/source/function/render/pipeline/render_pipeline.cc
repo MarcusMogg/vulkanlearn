@@ -10,7 +10,7 @@ void RenderPipeline::Init(const RenderPipelineInitInfo& init_info) {
 }
 
 void RenderPipeline::PreparePassData() {}
-void RenderPipeline::ForwardRender() {
+void RenderPipeline::Draw() {
   bool recreate_swapchain =
       render_rhi->PrepareBeforePass([this]() { PassUpdateAfterRecreateSwapchain(); });
   if (recreate_swapchain) {
@@ -19,7 +19,6 @@ void RenderPipeline::ForwardRender() {
 
   render_rhi->SubmitRendering([this]() { PassUpdateAfterRecreateSwapchain(); });
 }
-void RenderPipeline::DeferredRender() {}
 
 void RenderPipeline::PassUpdateAfterRecreateSwapchain() {}
 
