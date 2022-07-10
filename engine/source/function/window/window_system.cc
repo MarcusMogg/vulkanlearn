@@ -18,4 +18,13 @@ WindowSystem::~WindowSystem() {
   glfwTerminate();
 }
 
+std::vector<const char*> WindowSystem::GetExtensions() {
+  uint32_t     cnt = 0;
+  const char** glfwExtensions;
+
+  glfwExtensions = glfwGetRequiredInstanceExtensions(&cnt);
+  std::vector<const char*> gextensions(glfwExtensions, glfwExtensions + cnt);
+  return gextensions;
+}
+
 }  // namespace vkengine

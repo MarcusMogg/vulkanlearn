@@ -25,4 +25,8 @@ void GlobalContext::ShutdownSystem() {
   // RemoveObject<LogSystem>(kLogSystem);
 }
 
+const std::shared_ptr<LogSystem> GlobalContext::Logger() const {
+  return MustFindObject<LogSystem>(kLogSystem);
+}
+
 }  // namespace vkengine

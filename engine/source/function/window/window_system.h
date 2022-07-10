@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "forward.h"
 
 namespace vkengine {
@@ -16,6 +18,8 @@ class WindowSystem {
   ~WindowSystem();
 
   GLFWwindow* GetWindow() const { return window_; }
+
+  std::vector<const char*> GetExtensions();
 
  private:
   GLFWwindow* window_;

@@ -29,7 +29,7 @@ class LogSystem final {
   ~LogSystem();
 
   template <typename... TARGS>
-  void Log(LogLevel level, spdlog::source_loc&& loc, TARGS&&... args) {
+  void Log(LogLevel level, spdlog::source_loc&& loc, TARGS&&... args) const {
     switch (level) {
       case LogLevel::debug:
         logger_->log(
@@ -68,7 +68,7 @@ class LogSystem final {
   }
 
   template <typename... TARGS>
-  void FatalCallback(TARGS&&... args) {
+  void FatalCallback(TARGS&&... args) const {
     const std::string format_str = fmt::format(std::forward<TARGS>(args)...);
     throw std::runtime_error(format_str);
   }

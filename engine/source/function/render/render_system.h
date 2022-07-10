@@ -20,12 +20,6 @@ class RenderSystem {
   void Tick();
 
  private:
-  std::shared_ptr<VulkanRhi>          rhi_;
-  std::shared_ptr<Camera>             camera_;
-  std::shared_ptr<RenderResourceBase> resource_;
-  std::shared_ptr<RenderScene>        scene_;
-  std::shared_ptr<RenderPipelineBase> pipeline_;
-
   void ProcessSwapData();
 };
 

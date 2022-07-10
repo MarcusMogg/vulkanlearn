@@ -1,14 +1,13 @@
-#include "validationlayer.h"
+#include "function/render/vulkan/vk_validationlayer.h"
 
-#define GLFW_INCLUDE_VULKAN
 #include <iostream>
 
-#include "GLFW/glfw3.h"
-#include "core/exception/assert_exception.h"
-#include "core/utils/ccn_utils.h"
-#include "vulkan/vulkan.h"
+#include "function/render/vulkan/vk_instance.h"
 
-namespace vkengine {
+#define GLFW_INCLUDE_VULKAN
+#include "GLFW/glfw3.h"
+
+namespace vkengine::vulkan {
 namespace detail {
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
@@ -80,7 +79,7 @@ void ValidationLayer::Check() {
 }
 
 ValidationLayer::~ValidationLayer() {
-  detail::DestroyDebugUtilsMessengerEXT(instance_, debug_messenger_, nullptr);
+  detail::DestroyDebugUtilsMessengerEXT(instance_.GetHandle(), debug_messenger_, nullptr);
 }
 
 void ValidationLayer::Init() {
@@ -95,10 +94,9 @@ void ValidationLayer::Init() {
   createInfo.pfnUserCallback = detail::DebugCallback;
   createInfo.pUserData       = nullptr;  // Optional
   ASSERT_EXECPTION(
-      detail::CreateDebugUtilsMessengerEXT(instance_, &createInfo, nullptr, &debug_messenger_) !=
-      VK_SUCCESS)
+      detail::CreateDebugUtilsMessengerEXT(
+          instance_.GetHandle(), &createInfo, nullptr, &debug_messenger_) != VK_SUCCESS)
       .SetErrorMessage("CheckValidationLayersSupport error")
       .Throw();
 }
-
-}  // namespace vkengine
+}  // namespace vkengine::vulkan

@@ -4,22 +4,23 @@
 
 #include "forward.h"
 #include "vulkan/vulkan.h"
-namespace vkengine {
+
+namespace vkengine::vulkan {
 
 static const std::vector<const char*> kValidationLayers = {"VK_LAYER_KHRONOS_validation"};
 
 class ValidationLayer {
  public:
-  ValidationLayer(VkInstance instance) : instance_(instance) {}
+  explicit ValidationLayer(const Instance& instance) : instance_(instance) {}
   ~ValidationLayer();
 
   static void Check();
   void        Init();
 
  private:
-  VkInstance               instance_;
+  const Instance&          instance_;
   VkDebugUtilsMessengerEXT debug_messenger_;
 
   static bool CheckValidationLayersSupport();
 };
-}  // namespace vkengine
+}  // namespace vkengine::vulkan

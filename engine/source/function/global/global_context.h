@@ -1,7 +1,8 @@
 #pragma once
 
-#include "core/utils/object_pool.h"
-#include "core/utils/singleton.h"
+#include <memory>
+
+#include "forward.h"
 
 namespace vkengine {
 
@@ -16,6 +17,8 @@ class GlobalContext : public IObjectPool, public Singleton<GlobalContext> {
 
   void StartSystem();
   void ShutdownSystem();
+
+  const std::shared_ptr<LogSystem> Logger() const;
 };
 
 }  // namespace vkengine

@@ -18,7 +18,7 @@ void AssertExceptionFail::Throw() {
       loc_.filename ? loc_.filename : "<unknown>",
       loc_.line,
       loc_.funcname ? loc_.funcname : "<unknown>",
-      error_msg);
+      error_msg_);
   std::cerr << error << std::endl;
   throw std::runtime_error(error);
 }

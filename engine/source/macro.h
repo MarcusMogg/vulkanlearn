@@ -1,12 +1,11 @@
 #pragma once
 
-#include "core/exception/assert_exception.h"
 #include "core/logsystem/log_system.h"
 #include "function/global/global_context.h"
 
 #define GContext vkengine::GlobalContext::GetInstance()
 
-#define GLog GContext.MustFindObject<vkengine::LogSystem>(kLogSystem)
+#define GLog GContext.Logger()
 
 #define LOG_HELPER(LOG_LEVEL, ...) GLog->Log(LOG_LEVEL, SRC, __VA_ARGS__)
 
